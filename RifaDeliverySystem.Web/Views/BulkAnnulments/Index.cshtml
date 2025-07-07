@@ -1,0 +1,33 @@
+@model IEnumerable<RifaDeliverySystem.Web.Models.BulkAnnulment>
+@{
+    ViewData["Title"] = "Anulación Masiva de Cupones";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>@ViewData["Title"]</h1>
+<p><a asp-action="Create" class="btn btn-primary">Nueva Anulación Masiva</a></p>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Fecha</th><th>Vendedor</th><th>Rango</th><th>Motivo</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach(var item in Model)
+    {
+        <tr>
+            <td>@item.Date.ToString("dd/MM/yyyy")</td>
+            <td>@item.Vendor.Name</td>
+            <td>@item.StartNumber – @item.EndNumber</td>
+            <td>@item.Reason</td>
+        </tr>
+    }
+    </tbody>
+</table>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

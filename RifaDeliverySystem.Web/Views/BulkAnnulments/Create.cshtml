@@ -1,0 +1,43 @@
+@model RifaDeliverySystem.Web.Models.BulkAnnulment
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Nueva Anulación Masiva";
+    var vendors = ViewBag.Vendors as SelectList;
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>@ViewData["Title"]</h1>
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="mb-3">
+        <label asp-for="VendorId" class="form-label">Vendedor</label>
+        <select asp-for="VendorId" asp-items="vendors" class="form-select"></select>
+        <span asp-validation-for="VendorId" class="text-danger"></span>
+    </div>
+    <div class="row">
+        <div class="col">
+            <label asp-for="StartNumber" class="form-label">Desde</label>
+            <input asp-for="StartNumber" class="form-control" />
+            <span asp-validation-for="StartNumber" class="text-danger"></span>
+        </div>
+        <div class="col">
+            <label asp-for="EndNumber" class="form-label">Hasta</label>
+            <input asp-for="EndNumber" class="form-control" />
+            <span asp-validation-for="EndNumber" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Reason" class="form-label">Motivo</label>
+        <input asp-for="Reason" class="form-control" />
+        <span asp-validation-for="Reason" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-success">Anular</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

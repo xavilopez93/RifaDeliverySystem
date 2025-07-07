@@ -1,0 +1,14 @@
+@{
+    ViewData["Title"] = "Download Coupon Ranges";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>@ViewData["Title"]</h1>
+<p>
+    <a asp-action="DownloadRanges" class="btn btn-success">Download Excel</a>
+    <a asp-action="ExportRangesPdf" class="btn btn-danger ms-2">Download PDF</a>
+</p>

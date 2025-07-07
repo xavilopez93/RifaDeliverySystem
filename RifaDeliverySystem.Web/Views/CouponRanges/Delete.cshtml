@@ -1,0 +1,21 @@
+@model RifaDeliverySystem.Web.Models.CouponRange
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Delete Range";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>Delete Coupon Range</h1>
+<p>Delete range @Model.StartNumber–@Model.EndNumber for @Model.VendorId.?</p>
+<form asp-action="DeleteConfirmed" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

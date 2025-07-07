@@ -1,0 +1,207 @@
+﻿@model RifaDeliverySystem.Web.Models.Rendition
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using RifaDeliverySystem.Web.Extensions;
+
+@{
+    ViewData["Title"] = "Crear Rendición";
+    // ViewBag.Vendors  = SelectList of vendor.Id / vendor.Name
+    // ViewBag.Ranges   = SelectList of range.Id / $"{range.Vendor.Name}: {range.StartNumber}-{range.EndNumber}"
+}
+@using System.Globalization
+@using System.Text.RegularExpressions
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="VendorId" class="form-label">Vendedor</label>
+        <select asp-for="VendorId" id="VendorId" asp-items="ViewBag.Vendors" class="form-select">
+            <option value="">-- Seleccione --</option>
+        </select>
+        <span asp-validation-for="VendorId" class="text-danger"></span>
+    </div>
+
+    <!-- ▼ Rangos disponibles (multi-select) -->
+    <div class="mb-3">
+      <select asp-for="RangeIds"
+        asp-items="Model.AvailableRanges" id="RangeIds"
+        multiple class="form-select select2">
+</select>
+<span asp-validation-for="RangeIds" class="text-danger"></span>
+    </div>
+
+ 
+
+    <p>Total de cupones seleccionados: <strong id="totalCoupons">0</strong></p>
+
+    @* <div class="mb-3">
+        <label asp-for="CouponRangeId" class="form-label">Rango de Cupones</label>
+        <select asp-for="CouponRangeId" asp-items="ViewBag.Ranges" class="form-select">
+            <option value="">-- Seleccione --</option>
+        </select>
+        <span asp-validation-for="CouponRangeId" class="text-danger"></span>
+    </div> *@
+
+    <div class="row">
+        <div class="col">
+            <label asp-for="CouponsSold" class="form-label">Cupones Vendidos</label>
+            <input asp-for="CouponsSold" class="form-control" />
+            <span asp-validation-for="CouponsSold" class="text-danger"></span>
+        </div>
+        <div class="col">
+            <label asp-for="CouponsReturned" class="form-label">Cupones Devueltos</label>
+            <input asp-for="CouponsReturned" class="form-control" />
+            <span asp-validation-for="CouponsReturned" class="text-danger"></span>
+        </div>
+    </div>
+
+    <table class="table" id="paymentsTable">
+        <thead>
+            <tr><th>Forma</th><th>Monto</th><th>Referencia</th><th></th></tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Payments.Count; i++)
+            {
+                var payment = Model.Payments[i];
+                ViewData["Index"] = i;
+                <partial name="_PaymentRow" model="payment" />
+            }
+        </tbody>
+    </table>
+    <button type="button" id="addRow" class="btn btn-secondary">Agregar forma de cobro</button>
+    <!-- checkboxes for payment methods -->
+  @*   <div class="mb-3">
+        <label class="form-label">Métodos de Pago</label><br />
+
+        <input type="checkbox"
+               name="PaymentMethods"
+               value="Transferencia"
+               @(Model.PaymentMethods.Contains("Transferencia") ? "checked" : "") />
+        Transferencia<br />
+
+        <input type="checkbox"
+               name="PaymentMethods"
+               value="Efectivo"
+               @(Model.PaymentMethods.Contains("Efectivo") ? "checked" : "") />
+        Efectivo<br />
+
+        <input type="checkbox"
+               name="PaymentMethods"
+               value="Depósito"
+               @(Model.PaymentMethods.Contains("Depósito") ? "checked" : "") />
+        Depósito<br />
+
+        <input type="checkbox"
+               name="PaymentMethods"
+               value="Giro"
+               @(Model.PaymentMethods.Contains("Giro") ? "checked" : "") />
+        Giro<br />
+
+        <input type="checkbox"
+               name="PaymentMethods"
+               value="Otro"
+               @(Model.PaymentMethods.Contains("Otro") ? "checked" : "") />
+        Otro<br />
+
+        <input asp-for="OtherPayment"
+               class="form-control mt-1"
+               placeholder="Especifique otro" />
+        <span asp-validation-for="OtherPayment" class="text-danger"></span>
+    </div>
+ *@
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+     <script src="~/lib/select2/js/select2.min.js"></script>
+    <link  href="~/lib/select2/css/select2.min.css" rel="stylesheet" />
+    <script>
+        document.getElementById('addRow').addEventListener('click', () => {
+            fetch('@Url.Action("EmptyPaymentRow", "Renditions")')
+              .then(r => r.text())
+              .then(html => {
+                  document.querySelector('#paymentsTable tbody').insertAdjacentHTML('beforeend', html);
+                  renumerateIndexes();          // ajusta name="Payments[i].Amount" …
+              });
+        });
+        document.addEventListener('click', e => {
+            if (e.target.closest('.remove-row')) {
+                e.target.closest('tr').remove();
+                renumerateIndexes();
+            }
+        });
+        function renumerateIndexes() {
+            document.querySelectorAll('.payment-row').forEach((row, idx) => {
+                row.querySelectorAll('input,select').forEach(el => {
+                    el.name = el.name.replace(/Payments\[\d+\]/, `Payments[${idx}]`);
+                    el.id   = el.id.replace(/_Payments_\d+__/, `_Payments_${idx}__`);
+                });
+            });
+        }
+        // ===== Select2 =====
+        $('.select2').select2({
+            placeholder: 'Seleccione uno o varios rangos…',
+            width: '100%',
+            dropdownParent: $('form')
+        });
+
+        // ===== Conteo dinámico =====
+     const rangeMap = @Html.Raw(
+            System.Text.Json.JsonSerializer.Serialize(
+                Model.AvailableRanges.ToDictionary(
+                    r => int.Parse(r.Value),
+                    r => {
+                        try
+                    {
+                        var regex = new Regex(@"\(?\s*(\d+)\s*-\s*(\d+)\s*\)?");
+        var match = regex.Match(r.Text);
+        int result = 0;
+        if (match.Success)
+        {
+            // Grupo 1 = primer número, Grupo 2 = segundo número
+            int a = int.Parse(match.Groups[1].Value);
+            int b = int.Parse(match.Groups[2].Value);
+             result = b - a;
+        }
+        else
+        {
+        }
+                       
+                        return result;
+                    }
+                    catch (Exception ex)
+                    {
+                        
+                        throw;
+                    }
+                      
+                    })
+            )
+        );
+
+        function updateTotal() {
+            let total = 0;
+            $('#RangeIds option:selected').each(function () {
+                total += rangeMap[parseInt(this.value)];
+            });
+            $('#totalCoupons').text(total);
+        }
+        updateTotal();
+        $('.select2').on('change', updateTotal);
+
+
+          $('#VendorId').on('change', function () {
+        const vid = $(this).val();
+        // recarga la misma vista con el vendorId como querystring
+        window.location = '@Url.Action("Create","Renditions")' + '?vendorId=' + vid;
+    });
+    </script>
+}

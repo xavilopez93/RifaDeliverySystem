@@ -1,0 +1,62 @@
+﻿:root {
+    primary-color: #5a2782; /* Verde oscuro#2E4A1F*/
+    secondary-color: #ed7303; /* Verde medio #ed7303 #7B9E4F*/
+    accent-color: #CBB67F; /* Beige tostado */
+    background-color: #F4F1E6; /* Crema claro */
+    text-color: "#333333"; /* Gris oscuro \*/
+}
+
+body {
+    background-color: #F4F1E6;
+    color: #333333;
+}
+
+
+.navbar, .footer {
+    background-color: #5a2782;
+}
+
+    .navbar .navbar-brand,
+    .navbar .nav-link,
+    .footer a {
+        color: #FFFFFF !important;
+    }
+
+.btn-primary {
+    background-color: #ed7303;
+    border-color: #ed7303;
+}
+
+    .btn-primary:hover {
+        background-color: #5a2782;
+        border-color: #5a2782;
+    }
+
+.card, .panel {
+    background-color: #FFFFFF;
+    border: 1px solid #CBB67F;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+h1, h2, h3, h4 {
+    color: #5a2782;
+}
+
+.form-control {
+    border-color: #CBB67F;
+}
+
+.form-control:focus {
+    border-color: #ed7303;
+    box-shadow: 0 0 0 0.2rem rgba(123,158,79,0.25);
+}
+
+.table thead {
+    background-color: #ed7303;
+    color: #FFFFFF;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(123,158,79,0.1);
+}

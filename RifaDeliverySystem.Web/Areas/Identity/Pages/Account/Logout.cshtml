@@ -1,0 +1,14 @@
+﻿@page
+@model RifaDeliverySystem.Web.Areas.Identity.Pages.Account.LogoutModel
+@{
+    ViewData["Title"] = "Cerrar sesión";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<form method="post" class="mt-3">
+    @Html.AntiForgeryToken()
+    <p>¿Deseas cerrar la sesión?</p>
+    <button type="submit" class="btn btn-danger">Cerrar sesión</button>
+    <a asp-page="./Login" class="btn btn-secondary">Cancelar</a>
+</form>

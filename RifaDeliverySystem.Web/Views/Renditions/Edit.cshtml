@@ -1,0 +1,195 @@
+@model RifaDeliverySystem.Web.Models.Rendition
+@using RifaDeliverySystem.Web.Models
+@{
+    ViewData["Title"] = "Edit Rendition";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>Editar Rendicion</h1>
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+     <div class="mb-3">
+        <label asp-for="VendorId" class="form-label">Vendedor</label>
+        <select asp-for="VendorId" asp-items="ViewBag.Vendors" class="form-select">
+            <option value="">-- Seleccione --</option>
+        </select>
+        <span asp-validation-for="VendorId" class="text-danger"></span>
+    </div>
+
+    <h5>Rangos asignados</h5>
+    <div class="mb-3">
+        <div class="row">
+            @foreach (var item in ViewBag.Ranges)
+            {
+                // _CouponRangeCheckbox muestra (1–1000 | 1 000 cupones)
+                await Html.PartialAsync("_CouponRangeCheckbox",
+                (item, Model.AvailableRanges));
+            }
+        </div>
+        @* <span asp-validation-for="CouponRangeId" class="text-danger"></span> *@
+    </div>
+
+    <p>Total de cupones seleccionados: <strong id="totalCoupons">0</strong></p>
+
+
+   @*  <div class="mb-3">
+        <label asp-for="CouponRangeId" class="form-label">Rango de Cupones</label>
+        <select asp-for="CouponRangeId" asp-items="ViewBag.Ranges" class="form-select">
+            <option value="">-- Seleccione --</option>
+        </select>
+        <span asp-validation-for="CouponRangeId" class="text-danger"></span>
+    </div> *@
+    <div class="mb-3">
+        <label asp-for="Date">Date</label>
+        <input asp-for="Date" type="date" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="CouponsSold">Coupons Sold</label>
+        <input asp-for="CouponsSold" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="CouponsReturned">Coupons Returned</label>
+        <input asp-for="CouponsReturned" class="form-control" />
+    </div>
+  @*  <div class="mb-3">
+        <label asp-for="EditionNumber">Edition Number</label>
+        <input asp-for="EditionNumber" class="form-control" />
+    </div>*@
+    <fieldset class="mb-3">
+        <legend>Annulments</legend>
+        @for (int i = 0; i < 3; i++)
+        {
+            var reason = (AnnulmentReason)i;
+            <div class="d-flex align-items-center mb-2">
+                <label class="me-2">@reason</label>
+                <input name="annulCounts" type="number" min="0" value="0" class="form-control w-25" />
+            </div>
+        }
+    </fieldset>
+
+    <div class="mb-3">
+    <h4>Métodos de Pago</h4>
+    <table class="table" id="paymentsTable">
+        <thead>
+            <tr>
+                <th>Forma</th>
+                <th>Monto</th>
+                <th>Referencia</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+                @for (int i = 0; i < Model.Payments.Count; i++)
+                {
+                    var payment = Model.Payments[i];
+                    ViewData["Index"] = i;
+                    <partial name="_PaymentRow" model="payment" />
+                }
+        </tbody>
+    </table>
+
+    <button type="button" id="addRow" class="btn btn-secondary">Agregar forma de cobro</button>
+    </div>
+
+   @*  <div class="mb-3">
+        <label class="form-label">Métodos de Pago</label><br />
+
+        <input type="checkbox"
+               name="PaymentMethods"
+               value="Transferencia"
+               @(Model.PaymentMethods.Contains("Transferencia") ? "checked" : "") />
+        Transferencia<br />
+
+        <input type="checkbox"
+               name="PaymentMethods"
+               value="Efectivo"
+               @(Model.PaymentMethods.Contains("Efectivo") ? "checked" : "") />
+        Efectivo<br />
+
+        <input type="checkbox"
+               name="PaymentMethods"
+               value="Depósito"
+               @(Model.PaymentMethods.Contains("Depósito") ? "checked" : "") />
+        Depósito<br />
+
+        <input type="checkbox"
+               name="PaymentMethods"
+               value="Giro"
+               @(Model.PaymentMethods.Contains("Giro") ? "checked" : "") />
+        Giro<br />
+
+        <input type="checkbox"
+               name="PaymentMethods"
+               value="Otro"
+               @(Model.PaymentMethods.Contains("Otro") ? "checked" : "") />
+        Otro<br />
+
+        <input asp-for="OtherPayment"
+               class="form-control mt-1"
+               placeholder="Especifique otro" />
+        <span asp-validation-for="OtherPayment" class="text-danger"></span>
+    </div>
+ *@
+   @* <div class="mb-3">
+        <label asp-for="PaymentMethods" class="form-label">Métodos de Pago</label>
+        <select asp-for="PaymentMethods"
+                asp-items="ViewBag.PaymentMethodsList"
+                multiple="multiple"
+                class="form-select">
+        </select>
+        <span asp-validation-for="PaymentMethods" class="text-danger"></span>
+
+        <input asp-for="OtherPayment" class="form-control mt-1"
+               placeholder="Especifique otro" />
+        <span asp-validation-for="OtherPayment" class="text-danger"></span>
+    </div>*@
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('addRow').addEventListener('click', () => {
+            fetch('@Url.Action("EmptyPaymentRow", "Renditions")')
+              .then(r => r.text())
+              .then(html => {
+                  document.querySelector('#paymentsTable tbody').insertAdjacentHTML('beforeend', html);
+                  renumerateIndexes();
+              });
+        });
+
+        document.addEventListener('click', e => {
+            if (e.target.closest('.remove-row')) {
+                e.target.closest('tr').remove();
+                renumerateIndexes();
+            }
+        });
+
+        function renumerateIndexes() {
+            document.querySelectorAll('.payment-row').forEach((row, idx) => {
+                row.querySelectorAll('input, select').forEach(el => {
+                    const nameAttr = el.name;
+                    if (nameAttr) {
+                        el.name = nameAttr.replace(/Payments\[\d+\]/, `Payments[${idx}]`);
+                        el.id = el.id.replace(/Payments_\d+__/, `Payments_${idx}__`);
+                    }
+                });
+            });
+        }
+        function updateTotal() {
+            let total = 0;
+            $('input[name="RangeIds"]:checked').each(function () {
+                total += parseInt($(this).data('qty'));
+            });
+            $('#totalCoupons').text(total);
+        }
+        updateTotal();
+        $(document).on('change', 'input[name="RangeIds"]', updateTotal);
+    </script>
+}

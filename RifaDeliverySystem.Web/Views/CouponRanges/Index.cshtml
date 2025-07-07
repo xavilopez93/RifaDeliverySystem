@@ -1,0 +1,33 @@
+@model IEnumerable<RifaDeliverySystem.Web.Models.CouponRange>
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Coupon Ranges";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>Coupon Ranges</h1>
+<p><a asp-action="Create" class="btn btn-primary">New Range</a></p>
+<table class="table">
+  <thead><tr><th>Vendor</th><th>Start</th><th>End</th><th></th></tr></thead>
+  <tbody>
+        @foreach (var r in Model)
+        {
+        <tr>
+          <td>@r.Vendor.Name</td>
+          <td>@r.StartNumber</td>
+          <td>@r.EndNumber</td>
+          <td>
+            <a asp-action="Edit" asp-route-id="@r.Id">Edit</a> |
+            <a asp-action="Delete" asp-route-id="@r.Id">Delete</a>
+          </td>
+        </tr>
+        }
+  </tbody>
+</table>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

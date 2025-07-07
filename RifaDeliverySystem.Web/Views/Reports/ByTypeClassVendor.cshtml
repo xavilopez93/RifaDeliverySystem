@@ -1,0 +1,82 @@
+@model IEnumerable<RifaDeliverySystem.Web.Models.TypeClassVendorReportItem>
+@using System.Linq
+
+@{
+    ViewData["Title"] = "Report by Type/Class";
+    var types = ViewBag.Types as List<string> ?? new List<string>();
+    var classes = ViewBag.Classes as List<string> ?? new List<string>();
+    var report = Model ?? Enumerable.Empty<RifaDeliverySystem.Web.Models.TypeClassVendorReportItem>();
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+
+<h1>@ViewData["Title"]</h1>
+
+<form asp-action="ByTypeClassVendor" method="post" class="row g-3 mb-4">
+    <div class="col-auto">
+        <select name="type" class="form-select">
+            <option disabled selected>Type</option>
+            @foreach (var t in types)
+            {
+                <option value="@t">@t</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <select name="class" class="form-select">
+            <option disabled selected>Class</option>
+            @foreach (var c in classes)
+            {
+                <option value="@c">@c</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Generate</button>
+    </div>
+</form>
+
+@if (report.Any())
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Vendor</th>
+                <th>Delivered</th>
+                <th>Sold</th>
+                <th>Returned</th>
+                <th>Annulled</th>
+                <th>Gross</th>
+                <th>Commission</th>
+                <th>Net</th>
+                <th>State</th>
+                <th>Sale %</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in report)
+            {
+                <tr>
+                    <td>@item.VendorName</td>
+                    <td>@item.Delivered</td>
+                    <td>@item.Sold</td>
+                    <td>@item.Returned</td>
+                    <td>@item.Annulled</td>
+                    <td>@item.GrossAmount.ToString("C0")</td>
+                    <td>@item.CommissionAmount.ToString("C0")</td>
+                    <td>@item.NetAmount.ToString("C0")</td>
+                    <td>@(item.Closed ? "Closed" : "Open")</td>
+                    <td>@item.SalePercentage.ToString("F2") %</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p>No data to display. Select a Type and Class and click Generate.</p>
+}

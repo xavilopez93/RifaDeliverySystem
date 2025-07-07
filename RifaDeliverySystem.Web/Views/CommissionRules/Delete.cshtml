@@ -1,0 +1,23 @@
+﻿@model RifaDeliverySystem.Web.Models.CommissionRule
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Eliminar Regla de Comision";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>Estas seguro que deseas eliminar esta regla de comision?  <strong>@Model.VendorType / @Model.VendorClass</strong> (from @Model.MinCoupons to @(Model.MaxCoupons?.ToString() ?? "∞") cupones)?</p>
+
+<form asp-action="DeleteConfirmed" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

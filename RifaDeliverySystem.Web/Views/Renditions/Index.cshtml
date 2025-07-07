@@ -1,0 +1,48 @@
+@model IEnumerable<RifaDeliverySystem.Web.Models.Rendition>
+@{
+    ViewData["Title"] = "Renditions";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>Renditions</h1>
+<p><a asp-action="Create" class="btn btn-primary">New Rendition</a></p>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Vendor</th><th>Date</th><th>Sold</th><th>Returned</th><th>Annulled</th><th>% Comm</th><th>Balance</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+        @foreach (var r in Model)
+        {
+        <tr>
+          <td>@r.Vendor.Name</td>
+          <td>@r.Date.ToShortDateString()</td>
+          <td>@r.CouponsSold</td>
+          <td>@r.CouponsReturned</td>
+          <td>@r.Annulments.Sum(a=>a.Count)</td>
+          <td>@r.CommissionAmount.ToString("%")</td>
+          <td>@r.Balance.ToString("C0")</td>
+          <td>
+            <a asp-action="Edit" asp-route-id="@r.Id">Edit</a>
+            <a asp-action="Delete" asp-route-id="@r.Id">Delete</a>
+                    @* <a asp-action="Comprobante" asp-route-id="@r.Id">Comprobante</a> *@
+                    <a asp-controller="Renditions" asp-action="PrintReceipt"
+                       asp-route-id="@r.Id"
+                       class="btn btn-primary" target="_blank">
+                        <i class="bi bi-printer"></i> Imprimir comprobante
+                    </a>
+          </td>
+       </tr>
+            
+        }
+  </tbody>
+</table>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,41 @@
+﻿@model RifaDeliverySystem.Web.Models.CommissionRule
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Nueva Regla de Comision";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<form asp-action="Create" method="post">
+  <div class="mb-3">
+    <label asp-for="VendorType" class="form-label"></label>
+    <input asp-for="VendorType" class="form-control" />
+  </div>
+  <div class="mb-3">
+    <label asp-for="VendorClass" class="form-label"></label>
+    <input asp-for="VendorClass" class="form-control" />
+  </div>
+  <div class="mb-3">
+    <label asp-for="MinCoupons" class="form-label"></label>
+    <input asp-for="MinCoupons" class="form-control" type="number" min="0" />
+  </div>
+  <div class="mb-3">
+    <label asp-for="MaxCoupons" class="form-label"></label>
+    <input asp-for="MaxCoupons" class="form-control" type="number" />
+    <small class="form-text text-muted">Leave blank for no upper limit</small>
+  </div>
+  <div class="mb-3">
+    <label asp-for="Percentage" class="form-label"></label>
+    <input asp-for="Percentage" class="form-control" type="number" step="0.01" />
+  </div>
+  <button type="submit" class="btn btn-success">Save</button>
+  <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

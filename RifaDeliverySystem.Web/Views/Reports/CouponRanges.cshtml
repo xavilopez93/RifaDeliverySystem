@@ -1,0 +1,37 @@
+﻿@model IEnumerable<RifaDeliverySystem.Web.Models.RangeReportItem>
+
+@{
+    ViewData["Title"] = "Informe de Rangos de Cupones";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>
+    <a asp-action="ExportPdfCouponRanges" class="btn btn-danger">📄 Descargar PDF</a>
+    <a asp-action="ExportExcelCouponRanges" class="btn btn-success">📊 Descargar Excel</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Vendedor</th>
+            <th>Desde</th>
+            <th>Hasta</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.VendorName</td>
+                <td>@item.StartNumber</td>
+                <td>@item.EndNumber</td>
+            </tr>
+        }
+    </tbody>
+</table>

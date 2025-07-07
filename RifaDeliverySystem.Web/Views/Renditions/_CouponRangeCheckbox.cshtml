@@ -1,0 +1,25 @@
+﻿@model (SelectListItem item, bool isChecked)
+
+@{
+    var id = "range_" + Model.item.Value;
+    var text = Model.item.Text;   // ejemplo: "1001–1200 (200)"
+    // Extrae cantidad entre paréntesis
+    var qty = int.Parse(
+        System.Text.RegularExpressions.Regex.Match(text, @"\((\d+)\)").Groups[1].Value);
+}
+
+<div class="col-md-4 mb-1">
+    <div class="form-check">
+        <input class="form-check-input"
+               type="checkbox"
+               id="@id"
+               name="RangeIds"
+               value="@Model.item.Value"
+               data-qty="@qty"
+               @(Model.isChecked ? "checked" : "") />
+
+        <label class="form-check-label" for="@id">
+            @Model.item.Text
+        </label>
+    </div>
+</div>

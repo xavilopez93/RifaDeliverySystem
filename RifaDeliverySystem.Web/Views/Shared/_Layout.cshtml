@@ -1,0 +1,115 @@
+@using Microsoft.AspNetCore.Identity
+
+ @inject SignInManager<ApplicationUser> SignInManager
+ @inject UserManager<ApplicationUser> UserManager
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Rifa Delivery System</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/css/bootstrap.min.css" />
+
+    <!-- Select2 CSS (local, sin CDN) -->
+    <link rel="stylesheet" href="~/lib/select2/css/select2.min.css" />
+
+    <!-- Site-wide styles -->
+   <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Rifa Delivery</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#mainNavbar" aria-controls="mainNavbar"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="mainNavbar">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                      @*   <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="CouponRanges" asp-action="Index">Rangos de Cupones</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Renditions" asp-action="Index">Rendiciones</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Reports" asp-action="Index">Reportes</a>
+                        </li> *@
+                        <li class="nav-item">
+                            <a class="nav-link" href="/CommissionRules">Commission Rules</a>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="/Vendors">Vendors</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/CouponRanges">Ranges</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Renditions">Renditions</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Reports/ByTypeClassVendor">Reports</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Dashboard">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Reports/RealTime">Real-Time Report</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Reports" asp-action="CouponRanges">
+                                Rangos de Cupones
+                            </a>
+                        </li>
+                    </ul>
+
+                    <ul class="navbar-nav">
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userMenu"
+                                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    @User.Identity?.Name
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                                    <li>
+                                        <form asp-area="Identity" asp-page="/Account/Login" method="post" class="d-inline">
+                                            <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="Identity" asp-page="/Account/Login">Iniciar sesión</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+        </nav>
+    </header>
+
+    <main class="container py-4">
+        @RenderBody()
+    </main>
+
+  @*   <footer class="border-top footer text-muted py-3">
+        <div class="container">
+            &copy; @DateTime.Now.Year - Rifa Delivery System
+        </div>
+    </footer> *@
+
+    <!-- jQuery (local) -->
+    <script src="~/lib/jquery/jquery.min.js"></script>
+
+    <!-- Bootstrap JS (requiere Popper incluido en bundle) -->
+    <script src="~/lib/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Select2 JS (local) -->
+    <script src="~/lib/select2/js/select2.min.js"></script>
+
+    <!-- Scripts generales del sitio -->
+    @* <script src="~/js/site.js" asp-append-version="true"></script> *@
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

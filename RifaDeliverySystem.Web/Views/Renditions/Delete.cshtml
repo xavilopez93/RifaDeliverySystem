@@ -1,0 +1,21 @@
+@model RifaDeliverySystem.Web.Models.Rendition
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Delete Rendition";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>Delete Rendition</h1>
+<p>Delete rendition for @Model.Vendor.Name on @Model.Date.ToShortDateString()?</p>
+<form asp-action="DeleteConfirmed" method="post">
+  <input type="hidden" asp-for="Id" />
+  <button type="submit" class="btn btn-danger">Delete</button>
+  <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

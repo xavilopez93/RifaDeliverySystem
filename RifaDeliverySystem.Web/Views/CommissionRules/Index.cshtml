@@ -1,0 +1,46 @@
+﻿@model IEnumerable<RifaDeliverySystem.Web.Models.CommissionRule>
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Reglas de Comisiones";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>@ViewData["Title"]</h1>
+<p>
+    <a asp-action="Create" class="btn btn-primary">Nueva Regla</a>
+</p>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Tipo de vendedor</th>
+            <th>Clase de vendedor</th>
+            <th>Min Cupones</th>
+            <th>Max Cupones</th>
+            <th>% Comisión</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model)
+        {
+            <tr>
+                <td>@r.VendorType</td>
+                <td>@r.VendorClass</td>
+                <td>@r.MinCoupons</td>
+                <td>@(r.MaxCoupons?.ToString() ?? "∞")</td>
+                <td>@r.Percentage.ToString("F2") %</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@r.Id">Editar</a> |
+                    <a asp-action="Delete" asp-route-id="@r.Id">Eliminar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

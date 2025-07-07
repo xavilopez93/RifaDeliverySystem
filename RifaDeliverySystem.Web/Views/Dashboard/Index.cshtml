@@ -1,0 +1,41 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>Dashboard</h1>
+<div class="row gy-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3 text-center">
+            <h5>Vendors</h5>
+            <h2 id="totalVendors">@ViewBag.TotalVendors</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 text-center">
+            <h5>Total Sold</h5>
+            <h2 id="totalSold">@ViewBag.TotalSold</h2>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 text-center">
+            <h5>Total Balance</h5>
+            <h2 id="totalBalance">@ViewBag.TotalBalance</h2>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const connection = new signalR.HubConnectionBuilder().withUrl("/dashboardHub").build();
+        connection.on("ReceiveUpdate", (sold, balance) => {
+            document.getElementById("totalSold").innerText = sold;
+            document.getElementById("totalBalance").innerText = balance;
+        });
+        connection.start().catch(err => console.error(err));
+    </script>
+}

@@ -1,0 +1,30 @@
+﻿@model RifaDeliverySystem.Web.Models.VendorCategory
+@{
+    ViewData["Title"] = "New Vendor Category";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>@ViewData["Title"]</h1>
+<form asp-action="Create" method="post">
+    <div class="mb-3">
+        <label asp-for="Type" class="form-label"></label>
+        <input asp-for="Type" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Class" class="form-label"></label>
+        <input asp-for="Class" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="CommissionRate" class="form-label">Base Commission %</label>
+        <input asp-for="CommissionRate" class="form-control" type="number" step="0.01" />
+    </div>
+    <button type="submit" class="btn btn-success">Save</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

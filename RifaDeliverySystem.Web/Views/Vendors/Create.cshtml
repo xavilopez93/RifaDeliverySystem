@@ -1,0 +1,57 @@
+﻿@model RifaDeliverySystem.Web.Models.Vendor
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Crear Vendedor";
+    var types = ViewBag.Types as List<string> ?? new();
+    var classes = ViewBag.Classes as List<string> ?? new();
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Type" class="form-label">Tipo</label>
+        <select asp-for="Type" class="form-select" asp-items="new SelectList(types)"></select>
+        <span asp-validation-for="Type" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Class" class="form-label">Clase</label>
+        <select asp-for="Class" class="form-select" asp-items="new SelectList(classes)"></select>
+        <span asp-validation-for="Class" class="text-danger"></span>
+    </div>
+
+    <!-- ← Here we add the missing City & Department fields → -->
+    <div class="mb-3">
+        <label asp-for="City" class="form-label">Ciudad</label>
+        <input asp-for="City" class="form-control" />
+        <span asp-validation-for="City" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Department" class="form-label">Departamento</label>
+        <input asp-for="Department" class="form-control" />
+        <span asp-validation-for="Department" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,31 @@
+﻿@using RifaDeliverySystem.Web.Models
+@model RifaDeliverySystem.Web.Models.Payment
+@{
+    var idx = ViewData["Index"]?.ToString() ?? "0";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+<tr class="payment-row">
+    <td>
+        <select name="Payments[@idx].Type" class="form-select"
+                asp-items="Html.GetEnumSelectList<PaymentType>()"
+                asp-for="Type"></select>
+    </td>
+    <td>
+        <input name="Payments[@idx].Amount" value="@Model.Amount" class="form-control" />
+    </td>
+    <td>
+        <input name="Payments[@idx].ReceiptNumber" value="@Model.ReceiptNumber" class="form-control" />
+    </td>
+    <td>
+        <button type="button" class="btn btn-sm btn-danger remove-row">
+            <i class="bi bi-x"></i>
+        </button>
+    </td>
+</tr>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

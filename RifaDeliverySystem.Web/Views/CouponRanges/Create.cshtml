@@ -1,0 +1,47 @@
+@model RifaDeliverySystem.Web.Models.CouponRange
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using RifaDeliverySystem.Web.Extensions;
+@{ ViewData["Title"] = "Create Range"; }
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>Create Coupon Range</h1>
+<form asp-action="Create" method="post">
+
+    <div class="mb-3">
+        <label asp-for="VendorId" class="form-label">Vendedor</label>
+        <select asp-for="VendorId" asp-items="ViewBag.Vendors" class="form-select">
+            <option value="">-- Seleccione --</option>
+        </select>
+        <span asp-validation-for="VendorId" class="text-danger"></span>
+    </div>
+  
+
+  <div class="mb-3">
+    <label asp-for="StartNumber" class="form-label"></label>
+    <input asp-for="StartNumber" class="form-control" />
+  </div>
+  <div class="mb-3">
+    <label asp-for="EndNumber" class="form-label"></label>
+    <input asp-for="EndNumber" class="form-control" />
+  </div>
+  <button type="submit" class="btn btn-primary">Save</button>
+  <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function () {
+            $('.select2').select2({
+                dropdownParent: $('.modal-body').length ? $('.modal-body') : $(document.body),
+                placeholder: "Buscar vendedor…",
+                allowClear: true,
+                language: "es",
+                width: 'resolve'   // ocupa 100 %
+            });
+        });
+    </script>
+}

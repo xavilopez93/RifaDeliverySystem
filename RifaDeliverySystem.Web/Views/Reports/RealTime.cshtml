@@ -1,0 +1,64 @@
+﻿@{
+    ViewData["Title"] = "Real-Time Report";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>
+    <a asp-action="ExportRealTimeExcel" class="btn btn-success">Export Excel</a>
+    <a asp-action="ExportRealTimePdf" class="btn btn-danger ms-2">Export PDF</a>
+</p>
+
+<table class="table table-striped" id="realTimeTable">
+    <thead>
+        <tr>
+            <th>Type/Class</th>
+            <th>Delivered</th>
+            <th>Sold</th>
+            <th>Returned</th>
+            <th>Annulled</th>
+            <th>Gross</th>
+            <th>Commission</th>
+            <th>Net</th>
+            <th>State</th>
+            <th>Sale %</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+@section Scripts {
+    <script>
+        const tbody = document.querySelector('#realTimeTable tbody');
+        const conn = new signalR.HubConnectionBuilder().withUrl('/dashboardHub').build();
+
+        async function loadData() {
+            const resp = await fetch('/Reports/RealTimeData');
+            const items = await resp.json();
+            tbody.innerHTML = '';
+            items.forEach(it => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td>${it.vendorName}</td>
+                <td>${it.delivered}</td>
+                <td>${it.sold}</td>
+                <td>${it.returned}</td>
+                <td>${it.annulled}</td>
+                <td>${it.grossAmount.toLocaleString()}</td>
+                <td>${it.commissionAmount.toLocaleString()}</td>
+                <td>${it.netAmount.toLocaleString()}</td>
+                <td>${it.closed ? 'Closed' : 'Open'}</td>
+                <td>${it.salePercentage}%</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        conn.on('ReceiveUpdate', () => loadData());
+        conn.start().then(loadData).catch(console.error);
+    </script>
+}

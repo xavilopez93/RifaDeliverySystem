@@ -1,0 +1,40 @@
+@model IEnumerable<RifaDeliverySystem.Web.Models.RaffleEdition>
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Cierre de Ciclo";
+}
+@using System.Globalization
+@{
+    CultureInfo.CurrentCulture = new CultureInfo("es-PY");
+    CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
+}
+
+<h1>@ViewData["Title"]</h1>
+<p><a asp-action="Create" class="btn btn-primary">Nueva Edición</a></p>
+<table class="table table-striped">
+    <thead>
+        <tr><th>Año</th><th>Edición</th><th>Cerrado</th><th></th></tr>
+    </thead>
+    <tbody>
+    @foreach(var e in Model)
+    {
+        <tr>
+            <td>@e.Year</td>
+            <td>@e.Number</td>
+            <td>@(e.IsClosed ? "Sí" : "No")</td>
+            <td>
+                @if (!e.IsClosed)
+                {
+                    <form asp-action="Close" method="post" class="d-inline">
+                        <input type="hidden" name="id" value="@e.Id" />
+                        <button type="submit" class="btn btn-warning btn-sm">Cerrar ciclo</button>
+                    </form>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

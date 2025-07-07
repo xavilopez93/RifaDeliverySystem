@@ -1,0 +1,236 @@
+﻿@model RifaDeliverySystem.Web.Models.Rendition
+@using System.Globalization
+@using Humanizer;
+@{
+    Layout = null;  // o el Layout de tu app
+
+    // Cálculos según el ejemplo de la hoja de Excel
+    int unidadesVendidas = Model.CouponsSold;
+    int unidadesAnuladas = Model.Annulments?
+                                .Where(a => a.Reason == "Error de imprenta")
+                                .Sum(a => a.Count) ?? 0;
+    int unidadesExtraviadas = Model.Annulments?
+                                .Where(a => a.Reason == "Extravío")
+                                .Sum(a => a.Count) ?? 0;
+    int unidadesRobadas = Model.Annulments?
+                                .Where(a => a.Reason == "Robo")
+                                .Sum(a => a.Count) ?? 0;
+    int unidadesRetornadas = Model.CouponsReturned;
+
+    int bruto = unidadesVendidas * 10000;                    // Cupones × 10.000
+    decimal pct = (Model.CommissionAmount / bruto) * 100;      // porcentaje real
+    int comision = (int)Model.CommissionAmount;                 // comisión en Gs.
+    int neto = bruto - comision;                            // monto neto recibido
+    var fmt = new CultureInfo("es-PY");
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1em;
+        }
+
+            .table th, .table td {
+                border: 1px solid #333;
+                padding: 4px;
+            }
+
+        .no-border {
+            border: none !important;
+        }
+
+        .sig {
+            margin-top: 3em;
+        }
+
+            .sig div {
+                display: inline-block;
+                width: 45%;
+                text-align: center;
+            }
+    </style>
+</head>
+<body>
+    <div class="center">
+        <h2>Rendiciones de Fondos N° @Model.Id</h2>
+        <p>Fecha de rendición: @Model.Date.ToString("d", fmt)</p>
+        <p>RIFA N° 14° Rifa Anual Sonidos de la Tierra</p>
+        <hr />
+    </div>
+
+    <p><strong>Vendedor:</strong> @Model.Vendor.Name</p>
+    <p><strong>Verificador:</strong> Ingri Guillén – Administración</p>
+
+    <h4>Detalle de rendición de Cupones</h4>
+    <ul>
+        <li>Cupones Vendidos: @unidadesVendidas unidades</li>
+        <li>Cupones Anulados: @unidadesAnuladas unidades</li>
+        <li>Cupones Extraviados: @unidadesExtraviadas unidades</li>
+        <li>Cupones Robados: @unidadesRobadas unidades</li>
+        <li>Cupones Retornados: @unidadesRetornadas unidades</li>
+    </ul>
+
+    <h4>Detalle de Cupones vendidos e importe Recibido</h4>
+    <table class="table">
+        <tr>
+            <th>Concepto</th>
+            <th>Cálculo</th>
+            <th>Monto (Gs.)</th>
+        </tr>
+        <tr>
+            <td>Cupones Vendidos</td>
+            <td>@unidadesVendidas × 10.000</td>
+            <td>@bruto.ToString("N0", fmt)</td>
+        </tr>
+        <tr>
+            <td>% de Comisiones s/ cupones vendidos (@pct.ToString("F0", fmt)%)</td>
+            <td></td>
+            <td>-@comision.ToString("N0", fmt)</td>
+        </tr>
+        <tr>
+            <td><strong>(=) Monto Neto Recibido por Sonidos</strong></td>
+            <td></td>
+            <td><strong>@neto.ToString("N0", fmt)</strong></td>
+        </tr>
+    </table>
+
+    <h4>Forma de Cobro</h4>
+   @*  <table class="table no-border">
+        <tr>
+            <td>Transferencia</td>
+            <td>
+                @(Model.PaymentMethods.Contains("Transferencia")
+                    ? comision == 0 ? "0" : ""
+                    : "0")
+            </td>
+            <td>N° de Comprobante</td>
+        </tr>
+        <tr>
+            <td>Efectivo</td>
+            <td>
+                @(Model.PaymentMethods.Contains("Efectivo")
+                    ? neto.ToString("N0", fmt)
+                    : "0")
+            </td>
+            <td>N° de Boleta</td>
+        </tr>
+        <tr>
+            <td>Depósito</td>
+            <td>0</td>
+            <td>N° de Boleta</td>
+        </tr>
+        <tr>
+            <td>Giro</td>
+            <td>0</td>
+            <td>N° de Comprobante</td>
+        </tr>
+        <tr>
+            <th>Total</th>
+            <th>@neto.ToString("N0", fmt)</th>
+            <th></th>
+        </tr>
+    </table> *@
+
+    <p><em>Monto en letras:</em> Guaraníes <strong>@neto.ToWords(new CultureInfo("es")).ToUpperInvariant()</strong></p>
+
+    <h4>Constancia de Entrega de Comisión</h4>
+    <p>Entregamos <strong>@Model.Vendor.Name</strong></p>
+    <p>Concepto: Pago de Comisiones por venta de cupones Rifa 14</p>
+    <p>Monto en Gs.: @comision.ToString("N0", fmt)</p>
+    <p><em>Monto en letras:</em> Guaraníes <strong>@comision.ToWords(new CultureInfo("es")).ToUpperInvariant()</strong></p>
+
+    <div class="sig">
+        <div>
+            FIRMA DEL VERIFICADOR<br />
+            Ingri Guillén<br />
+            Administración
+        </div>
+        <div>
+            FIRMA DEL VENDEDOR<br />
+            @Model.Vendor.Name
+        </div>
+    </div>
+
+    <hr />
+    <p>Form. N° 1 – Rendición de cupones vendidos – Versión 01 – @DateTime.Now:MM/yyyy</p>
+</body>
+</html>
+
+
+
+
+@*@model RifaDeliverySystem.Web.Models.Rendition
+
+@{
+    Layout = null;  // or whatever your layout is
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+</head>
+<body>
+    <div style="text-align:center; margin-bottom:20px;">
+        <img src="~/images/sonidos.gif" alt="Sonidos de la Tierra" />
+        <h2>COMPROBANTE DE RENDICIÓN DE VALORES</h2>
+    </div>
+
+    <p><strong>N° de Comprobante:</strong> @Model.Id</p>
+   
+    <p><strong>Fecha de Rendición:</strong> @Model.Date:dd/MM/yyyy</p>
+
+    <hr />
+
+    <p><strong>Nombre del Vendedor:</strong> @Model.Vendor.Name</p>
+    <p><strong>Tipo de Vendedor:</strong> @Model.Vendor.Type</p>
+    <p><strong>Clase de Vendedor:</strong> @Model.Vendor.Class</p>
+
+    <hr />
+    <p><strong>Cantidad Total de Cupones Vendidos:</strong> @Model.CouponsSold</p>
+<p><strong>Cupones Devueltos:</strong> @Model.CouponsReturned</p>
+<p><strong>Anulaciones:</strong> @Model.Annulments.Count()</p>
+<p><strong>Monto Bruto (Gs. 10.000 x vendidos):</strong> Gs. @(Model.CouponsSold * 10000)</p>
+<p><strong>Porcentaje de Comisión Correspondiente:</strong>
+   @((Model.CommissionAmount 
+       / (Model.CouponsSold * 10000m) 
+       * 100m
+     ).ToString("F2")) %</p>
+<p><strong>Monto Total de Comisión:</strong> Gs. @Model.CommissionAmount</p>
+<p><strong>Monto Neto Recibido:</strong> Gs. @Model.Balance</p>
+
+    <hr />
+
+    <p><strong>Forma de Entrega del Importe:</strong></p>
+    <ul>
+        @foreach (var m in Model.PaymentMethods)
+        {
+            <li>@m</li>
+        }
+        @if (!string.IsNullOrEmpty(Model.OtherPayment))
+        {
+            <li>Otro: @Model.OtherPayment</li>
+        }
+    </ul>
+
+    <div style="margin-top:40px;">
+        <span>Firma Persona Administración: ____________________</span><br />
+        <span>Firma Vendedor: _________________________________</span>
+    </div>
+</body>
+</html>
+*@
