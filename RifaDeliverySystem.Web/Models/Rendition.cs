@@ -26,6 +26,10 @@ namespace RifaDeliverySystem.Web.Models
         //public int CouponRangeId { get; set; }
         //public CouponRange CouponRange { get; set; } = null!;
 
+        public virtual ICollection<CouponRange> CouponRanges { get; set; } = new List<CouponRange>();
+
+
+
         [Required]
         [Display(Name = "Cupones vendidos")]
         public int CouponsSold { get; set; }

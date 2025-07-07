@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using ClosedXML.Excel;
 using iText.Kernel.Pdf;
 using iText.Layout;
@@ -12,6 +7,12 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using RifaDeliverySystem.Web.Data;
 using RifaDeliverySystem.Web.Models;
+using RifaDeliverySystem.Web.ViewModels.Reports;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace RifaDeliverySystem.Web.Controllers
 {
@@ -29,6 +30,10 @@ namespace RifaDeliverySystem.Web.Controllers
             ViewBag.Classes = await _context.CommissionRules.Select(r => r.VendorClass).Distinct().ToListAsync();
             return View(new List<TypeClassVendorReportItem>());
         }
+
+        // Fix for CS0103: The name 'SalePercentage' does not exist in the current context
+        // The issue occurs because the calculation for `SalePercentage` is incomplete and references an undefined property or method.
+        // The fix involves completing the calculation by using the correct property or method for the denominator.
 
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ByTypeClassVendor(string type, string vendorClass)
@@ -52,7 +57,6 @@ namespace RifaDeliverySystem.Web.Controllers
                 .Select(g => new TypeClassVendorReportItem
                 {
                     VendorName = g.Key.Name,
-                    //Delivered = g.Sum(r => r.CouponRanges.EndNumber - r.CouponRanges.StartNumber + 1),
                     Sold = g.Sum(r => r.CouponsSold),
                     Returned = g.Sum(r => r.CouponsReturned),
                     Annulled = g.SelectMany(r => r.Annulments).Count(),
@@ -61,9 +65,9 @@ namespace RifaDeliverySystem.Web.Controllers
                     NetAmount = g.Sum(r => r.Balance),
                     Closed = g.All(r =>
                         r.CouponsSold + r.CouponsReturned + r.Annulments.Count
-                        >= (r.CouponRange.EndNumber - r.CouponRange.StartNumber + 1)),
+                        >= (r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1))),
                     SalePercentage = g.Sum(r => r.CouponsSold) * 100m
-                                       / g.Sum(r => r.CouponRange.EndNumber - r.CouponRange.StartNumber + 1)
+                                      / g.Sum(r => r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1)) // Corrected denominator
                 })
                 .ToListAsync();
 
@@ -87,7 +91,7 @@ namespace RifaDeliverySystem.Web.Controllers
 
             var query = _context.Renditions
                 .Include(r => r.Vendor)
-                .Include(r => r.CouponRange)
+                .Include(r => r.CouponRanges)
                 .Include(r => r.Annulments)
                 .AsQueryable();
 
@@ -101,7 +105,7 @@ namespace RifaDeliverySystem.Web.Controllers
                 .Select(g => new CityDeptReportItem
                 {
                     VendorName = g.Key.Name,
-                    Delivered = g.Sum(r => r.CouponRange.EndNumber - r.CouponRange.StartNumber + 1),
+                    Delivered = g.Sum(r => r.CouponsSold),
                     Sold = g.Sum(r => r.CouponsSold),
                     Returned = g.Sum(r => r.CouponsReturned),
                     Annulled = g.SelectMany(r => r.Annulments).Count(),
@@ -110,9 +114,9 @@ namespace RifaDeliverySystem.Web.Controllers
                     NetAmount = g.Sum(r => r.Balance),
                     Closed = g.All(r =>
                         r.CouponsSold + r.CouponsReturned + r.Annulments.Count
-                        >= (r.CouponRange.EndNumber - r.CouponRange.StartNumber + 1)),
+>= (r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1))),
                     SalePercentage = g.Sum(r => r.CouponsSold) * 100m
-                                       / g.Sum(r => r.CouponRange.EndNumber - r.CouponRange.StartNumber + 1)
+                                       / g.Sum(r => r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1))
                 })
                 .ToListAsync();
 
@@ -183,22 +187,40 @@ namespace RifaDeliverySystem.Web.Controllers
 
         // --- Real-time report view ---
         [HttpGet]
-        public IActionResult RealTime()
-            => View();
+        //public IActionResult RealTime()
+        //    => View();
+        //public async Task<IActionResult> RealTime()
+        //{
+        //    var data = await _context.Renditions
+        //        .Include(r => r.)
+        //        .Include(r => r.Seller)
+        //        .GroupBy(r => new { r.Branch.Name, r.Seller.Name })
+        //        .Select(g => new RealTimeReportItem
+        //        {
+        //            BranchName = g.Key.Name,
+        //            SellerName = g.Key.Name1,
+        //            CouponCount = g.Sum(r => r.CouponsCount),
+        //            TotalAmount = g.Sum(r => r.TotalAmount)
+        //        })
+        //        .ToListAsync();
+
+        //    return View(data);
+        //}
+
 
         // JSON for real-time
         [HttpGet]
-        public async Task<JsonResult> RealTimeData()
+        public async Task<IActionResult> RealTimeData()
         {
             var data = await _context.Renditions
                 .Include(r => r.Vendor)
-                .Include(r => r.CouponRange)
+                .Include(r => r.CouponRanges)
                 .Include(r => r.Annulments)
                 .GroupBy(r => new { r.Vendor.Id, r.Vendor.Name })
                 .Select(g => new TypeClassVendorReportItem
                 {
                     VendorName = g.Key.Name,
-                    Delivered = g.Sum(r => r.CouponRange.EndNumber - r.CouponRange.StartNumber + 1),
+                    Delivered = g.Sum(r => r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1)),
                     Sold = g.Sum(r => r.CouponsSold),
                     Returned = g.Sum(r => r.CouponsReturned),
                     Annulled = g.SelectMany(r => r.Annulments).Count(),
@@ -207,9 +229,9 @@ namespace RifaDeliverySystem.Web.Controllers
                     NetAmount = g.Sum(r => r.Balance),
                     Closed = g.All(r =>
                         r.CouponsSold + r.CouponsReturned + r.Annulments.Count
-                        >= (r.CouponRange.EndNumber - r.CouponRange.StartNumber + 1)),
+>= (r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1))),
                     SalePercentage = g.Sum(r => r.CouponsSold) * 100m
-                                       / g.Sum(r => r.CouponRange.EndNumber - r.CouponRange.StartNumber + 1)
+                                       / g.Sum(r => r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1))
                 })
                 .ToListAsync();
 
@@ -220,8 +242,10 @@ namespace RifaDeliverySystem.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportRealTimeExcel()
         {
-            var items = (await RealTimeData().ConfigureAwait(false))
-                        .Value as List<TypeClassVendorReportItem> ?? new();
+            var result = await RealTimeData().ConfigureAwait(false);
+            var items = result is JsonResult jsonResult && jsonResult.Value is List<TypeClassVendorReportItem> data
+                ? data
+                : new List<TypeClassVendorReportItem>();
 
             using var wb = new XLWorkbook();
             var ws = wb.Worksheets.Add("RealTime");
@@ -255,8 +279,10 @@ namespace RifaDeliverySystem.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportRealTimePdf()
         {
-            var items = (await RealTimeData().ConfigureAwait(false))
-                        .Value as List<TypeClassVendorReportItem> ?? new();
+            var result = await RealTimeData().ConfigureAwait(false);
+            var items = result is JsonResult jsonResult && jsonResult.Value is List<TypeClassVendorReportItem> data
+                ? data
+                : new List<TypeClassVendorReportItem>();
 
             await using var ms = new MemoryStream();
             var writer = new PdfWriter(ms);
@@ -386,35 +412,312 @@ namespace RifaDeliverySystem.Web.Controllers
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                         $"Rangos_{DateTime.Now:yyyyMMdd}.xlsx");
         }
+
+
+
+        // Fix for CS1061: 'ApplicationDbContext' does not contain a definition for 'Models'
+        // The issue occurs because the code is trying to access a non-existent 'Models' property on the ApplicationDbContext class.
+        // The fix involves removing the incorrect reference to 'Models' and directly accessing the correct DbSet property.
+
+        //public async Task<IActionResult> BySellerBreakdown()
+        //{
+           
+        //}
+
+
+        public async Task<IActionResult> ExportSummaryByVendor()
+        {
+            var data = await _context.Renditions
+                .Include(r => r.Vendor)
+                .Include(r => r.CouponRanges)
+                .Where(r => r.VendorId != null)
+                .GroupBy(r => new
+                {
+                    r.Vendor.Class,
+                    r.Vendor.Type,
+                    r.Vendor.Name,
+                    r.CommissionAmount
+                })
+                .Select(g => new DeliverySalesReportItem
+                {
+                    SellerCategory = g.Key.Class.ToString(),
+                    SellerType = g.Key.Type.ToString(),
+                    SellerName = g.Key.Name,
+
+                    DeliveredCoupons = g.Count(),
+                    SoldCoupons = g.Sum(t => t.CouponsSold),
+                    GrossAmount = g.Sum(t => t.CouponsSold * 10000m),
+                    CommissionAmount = g.Sum(t => t.CommissionAmount),
+              
+             
+                })
+                .ToListAsync();
+
+            foreach (var item in data)
+                item.NetAmount = item.GrossAmount - item.CommissionAmount;
+
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Resumen por Vendedor");
+
+            // Cabecera
+            worksheet.Cell(1, 1).Value = "Tipo";
+            worksheet.Cell(1, 2).Value = "Clase";
+            worksheet.Cell(1, 3).Value = "Vendedor";
+            worksheet.Cell(1, 4).Value = "Entregados";
+            worksheet.Cell(1, 5).Value = "Vendidos";
+            worksheet.Cell(1, 6).Value = "Monto Bruto";
+            worksheet.Cell(1, 7).Value = "Comisión";
+            worksheet.Cell(1, 8).Value = "Monto Neto";
+
+            int row = 2;
+            foreach (var item in data)
+            {
+                worksheet.Cell(row, 1).Value = item.SellerCategory;
+                worksheet.Cell(row, 2).Value = item.SellerType;
+                worksheet.Cell(row, 3).Value = item.SellerName;
+                worksheet.Cell(row, 4).Value = item.DeliveredCoupons;
+                worksheet.Cell(row, 5).Value = item.SoldCoupons;
+                worksheet.Cell(row, 6).Value = item.GrossAmount;
+                worksheet.Cell(row, 7).Value = item.CommissionAmount;
+                worksheet.Cell(row, 8).Value = item.NetAmount;
+                row++;
+            }
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            stream.Position = 0;
+
+            return File(stream.ToArray(),
+                       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                       $"ResumenVendedores_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
+        }
+
+        public async Task<IActionResult> SummaryByVendor()
+        {
+            //var model = new VendorSummaryFilter
+            //{
+            //    TypeOptions = Enum.GetValues(typeof(Vendor))
+            //        .Cast<Vendor>()
+            //        .Select(t => new SelectListItem { Value = (t.Type).ToString(), Text = t.Type.ToString() }),
+
+            //    ClassOptions = Enum.GetValues(typeof(VendorCategory))
+            //        .Cast<VendorCategory>()
+            //        .Select(c => new SelectListItem { Value = (c.Id).ToString(), Text = c.DisplayName.ToString() })
+
+            //};
+            // Corrected the return type to pass the list of DeliverySalesReportItem to the view
+            var data = await _context.Renditions
+                .Include(t => t.Vendor)
+                .Where(t => t.VendorId != null)
+                .GroupBy(t => new
+                {
+                    t.Vendor.Type,
+                    t.Vendor.Class,
+                    t.Vendor.Name
+                })
+                .Select(g => new DeliverySalesReportItem
+                {
+                    SellerType = g.Key.Type,
+                    SellerCategory = g.Key.Class,
+                    SellerName = g.Key.Name,
+                    DeliveredCoupons = g.Count(),
+                    SoldCoupons = g.Sum(t => t.CouponsSold),
+                    GrossAmount = g.Sum(t => t.CouponsSold * 10000m),
+                    CommissionAmount = g.Sum(t => t.CommissionAmount)
+                })
+                .ToListAsync();
+
+            // Calculate net amount
+            foreach (var item in data)
+                item.NetAmount = item.GrossAmount - item.CommissionAmount;
+
+            // Pass the list to the view instead of attempting to cast it to a single item
+            return View(data);
+            //return View(model);
+        }
+        [HttpPost]
+        public async Task<IActionResult> SummaryByVendor(VendorSummaryFilter filter)
+        {
+            var query = _context.Renditions
+                .Include(r => r.Vendor)
+                .Include(r => r.CouponRanges)
+                .AsQueryable();
+
+            if (filter.StartDate.HasValue)
+                query = query.Where(r => r.Date >= filter.StartDate.Value.ToUniversalTime());
+
+            if (filter.EndDate.HasValue)
+                query = query.Where(r => r.Date <= filter.EndDate.Value.ToUniversalTime());
+
+            if (filter.SelectedType != null)
+                query = query.Where(r => r.Vendor.Type == filter.SelectedType.Type);
+
+            if (filter.SelectedClass != null)
+                query = query.Where(r => r.Vendor.Class == filter.SelectedClass.Class);
+
+            var data = await query
+                .GroupBy(r => new
+                {
+                    r.Vendor.Class,
+                    r.Vendor.Type,
+                    r.Vendor.Name
+                })
+                .Select(g => new DeliverySalesReportItem
+                {
+                    SellerCategory = g.Key.Class.ToString(),
+                    SellerType = g.Key.Type.ToString(),
+                    SellerName = g.Key.Name,
+                    DeliveredCoupons = g.SelectMany(r => r.CouponRanges).Count(),
+                    SoldCoupons = g.Sum(t => t.CouponsSold),
+                    GrossAmount = g.Sum(t => t.CouponsSold * 10000m),
+                    CommissionAmount = g.Sum(t => t.CommissionAmount),
+                })
+                .ToListAsync();
+
+            foreach (var item in data)
+                item.NetAmount = item.GrossAmount - item.CommissionAmount;
+
+            //filter.Results = data; // Fix: Ensure `filter.Results` is of type `IEnumerable<DeliverySalesReportItem>`.
+
+            // Refill dropdown options
+            filter.TypeOptions = Enum.GetValues(typeof(Vendor))
+                .Cast<Vendor>()
+                .Select(t => new SelectListItem { Value = (t.Type).ToString(), Text = t.Type.ToString() });
+
+            filter.ClassOptions = Enum.GetValues(typeof(VendorCategory))
+                .Cast<VendorCategory>()
+                .Select(c => new SelectListItem { Value = (c.Id).ToString(), Text = c.DisplayName.ToString() });
+
+            return View(filter);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportSummaryByVendorPdf([FromQuery] VendorSummaryFilter filter)
+        {
+            var query = _context.Renditions
+                .Include(r => r.Vendor)
+                .Include(r => r.CouponRanges)
+                .AsQueryable();
+
+            if (filter.StartDate.HasValue)
+                query = query.Where(r => r.Date >= filter.StartDate.Value);
+
+            if (filter.EndDate.HasValue)
+                query = query.Where(r => r.Date <= filter.EndDate.Value);
+
+            if (filter.SelectedType != null)
+                query = query.Where(r => r.Vendor.Type == filter.SelectedType.Type);
+
+            if (filter.SelectedClass != null)
+                query = query.Where(r => r.Vendor.Class == filter.SelectedClass.Class);
+
+            var data = await query
+                .GroupBy(r => new
+                {
+                    r.Vendor.Class,
+                    r.Vendor.Type,
+                    r.Vendor.Name
+                })
+                .Select(g => new DeliverySalesReportItem
+                {
+                    SellerCategory = g.Key.Class.ToString(),
+                    SellerType = g.Key.Type.ToString(),
+                    SellerName = g.Key.Name,
+                    DeliveredCoupons = g.SelectMany(r => r.CouponRanges).Count(),
+                    SoldCoupons = g.Sum(t => t.CouponsSold),
+                    GrossAmount = g.Sum(t => t.CouponsSold * 10000m),
+                    CommissionAmount = g.Sum(t => t.CommissionAmount),
+                })
+                .ToListAsync();
+
+            foreach (var item in data)
+                item.NetAmount = item.GrossAmount - item.CommissionAmount;
+
+            using var stream = new MemoryStream();
+            using var writer = new iText.Kernel.Pdf.PdfWriter(stream);
+            using var pdf = new iText.Kernel.Pdf.PdfDocument(writer);
+            var document = new iText.Layout.Document(pdf);
+
+            document.Add(new iText.Layout.Element.Paragraph("Resumen por Vendedor").SetBold().SetFontSize(16));
+
+            var table = new iText.Layout.Element.Table(8).UseAllAvailableWidth();
+            table.AddHeaderCell("Tipo");
+            table.AddHeaderCell("Clase");
+            table.AddHeaderCell("Vendedor");
+            table.AddHeaderCell("Entregados");
+            table.AddHeaderCell("Vendidos");
+            table.AddHeaderCell("Bruto");
+            table.AddHeaderCell("Comisión");
+            table.AddHeaderCell("Neto");
+
+            foreach (var item in data)
+            {
+                table.AddCell(item.SellerCategory);
+                table.AddCell(item.SellerType);
+                table.AddCell(item.SellerName);
+                table.AddCell(item.DeliveredCoupons.ToString());
+                table.AddCell(item.SoldCoupons.ToString());
+                table.AddCell(item.GrossAmount.ToString("N0"));
+                table.AddCell(item.CommissionAmount.ToString("N0"));
+                table.AddCell(item.NetAmount.ToString("N0"));
+            }
+
+            document.Add(table);
+            document.Close();
+
+            var fileName = $"ResumenVendedores_{DateTime.Now:yyyyMMddHHmmss}.pdf";
+            return File(stream.ToArray(), "application/pdf", fileName);
+        }
+
+        // ----- DTO classes for reports -----
+        //public class TypeClassVendorReportItem
+        //{
+        //    public string VendorName { get; set; } = "";
+        //    public int Delivered { get; set; }
+        //    public int Sold { get; set; }
+        //    public int Returned { get; set; }
+        //    public int Annulled { get; set; }
+        //    public decimal GrossAmount { get; set; }
+        //    public decimal CommissionAmount { get; set; }
+        //    public decimal NetAmount { get; set; }
+        //    public bool Closed { get; set; }
+        //    public decimal SalePercentage { get; set; }
+        //}
+
+        //public class CityDeptReportItem
+        //{
+        //    public string VendorName { get; set; } = "";
+        //    public int Delivered { get; set; }
+        //    public int Sold { get; set; }
+        //    public int Returned { get; set; }
+        //    public int Annulled { get; set; }
+        //    public decimal GrossAmount { get; set; }
+        //    public decimal CommissionAmount { get; set; }
+        //    public decimal NetAmount { get; set; }
+        //    public bool Closed { get; set; }
+        //    public decimal SalePercentage { get; set; }
+        //}
     }
+    // Fix for CS0229: Ambiguity between 'DeliverySalesReportItem.SellerType' and 'DeliverySalesReportItem.SellerType'
+    // The issue occurs because the `DeliverySalesReportItem` class has duplicate properties with the same name.
+    // The fix involves removing one of the duplicate properties from the `DeliverySalesReportItem` class.
 
-
-    // ----- DTO classes for reports -----
-    //public class TypeClassVendorReportItem
+    //public class DeliverySalesReportItem
     //{
-    //    public string VendorName { get; set; } = "";
-    //    public int Delivered { get; set; }
-    //    public int Sold { get; set; }
-    //    public int Returned { get; set; }
-    //    public int Annulled { get; set; }
+    //    public DateTime? StartDate { get; set; }
+    //    public DateTime? EndDate { get; set; }
+    //    public string SelectedType { get; set; }
+    //    public string SelectedClass { get; set; }
+    //    public IEnumerable<SelectListItem> TypeOptions { get; set; }
+    //    public IEnumerable<SelectListItem> ClassOptions { get; set; }
+    //    public IEnumerable<DeliverySalesReportItem> DeliverySalesReportItems { get; set; }
+    //    public string SellerType { get; set; } // Retain this property
+    //    public string SellerCategory { get; set; }
+    //    public string SellerName { get; set; }
+    //    public int DeliveredCoupons { get; set; }
+    //    public int SoldCoupons { get; set; }
     //    public decimal GrossAmount { get; set; }
     //    public decimal CommissionAmount { get; set; }
     //    public decimal NetAmount { get; set; }
-    //    public bool Closed { get; set; }
-    //    public decimal SalePercentage { get; set; }
-    //}
-
-    //public class CityDeptReportItem
-    //{
-    //    public string VendorName { get; set; } = "";
-    //    public int Delivered { get; set; }
-    //    public int Sold { get; set; }
-    //    public int Returned { get; set; }
-    //    public int Annulled { get; set; }
-    //    public decimal GrossAmount { get; set; }
-    //    public decimal CommissionAmount { get; set; }
-    //    public decimal NetAmount { get; set; }
-    //    public bool Closed { get; set; }
-    //    public decimal SalePercentage { get; set; }
     //}
 }

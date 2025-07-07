@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Controllers\ReportsController.cs" />
+    <Compile Remove="ViewModels\Reports\DeliverySalesReportViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Humanizer" Version="2.14.1" />

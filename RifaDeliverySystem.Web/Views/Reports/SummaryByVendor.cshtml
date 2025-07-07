@@ -1,0 +1,72 @@
+﻿@*BySellerBreakdown*@
+
+@using Microsoft.AspNetCore.Mvc.Rendering  
+@using RifaDeliverySystem.Web.Extensions  
+@model List<RifaDeliverySystem.Web.ViewModels.Reports.DeliverySalesReportItem>  
+
+<form asp-action="SummaryByVendor" method="post" class="row mb-4">
+    <div class="col-md-3">          
+        <label>Desde</label>  
+        <input type="date" name="StartDate" class="form-control" value="@Model.FirstOrDefault()?.StartDate?.ToString()" />  
+    </div>  
+    <div class="col-md-3">  
+        <label>Hasta</label>  
+        <input type="date" name="EndDate" class="form-control" value="@Model.FirstOrDefault()?.EndDate?.ToString()" />  
+    </div>  
+    <div class="col-md-3">  
+        <label>Tipo</label>  
+        <select name="SelectedType" class="form-control" asp-items="Model.FirstOrDefault()?.TypeOptions">  
+            <option value="">Todos</option>  
+        </select>  
+    </div>  
+    <div class="col-md-3">  
+        <label>Clase</label>  
+        <select name="SelectedClass" class="form-control" asp-items="Model.FirstOrDefault()?.ClassOptions">  
+            <option value="">Todos</option>  
+        </select>  
+    </div>  
+    <div class="col-md-12 mt-3">  
+        <button type="submit" class="btn btn-primary">Filtrar</button>  
+    </div>  
+</form>  
+
+<a asp-action="ExportSummaryByVendor" asp-route-StartDate="@Model.FirstOrDefault()?.StartDate?.ToString()"  
+   asp-route-EndDate="@Model.FirstOrDefault()?.EndDate?.ToString()"  
+   asp-route-SelectedType="@Model.FirstOrDefault()?.SelectedType"  
+   asp-route-SelectedClass="@Model.FirstOrDefault()?.SelectedClass"  
+   class="btn btn-success">Exportar a Excel</a>  
+<a asp-action="ExportSummaryByVendorPdf" asp-route-StartDate="@Model.FirstOrDefault()?.StartDate?.ToString()"  
+   asp-route-EndDate="@Model.FirstOrDefault()?.EndDate?.ToString()"  
+   asp-route-SelectedType="@Model.FirstOrDefault()?.SelectedType"  
+   asp-route-SelectedClass="@Model.FirstOrDefault()?.SelectedClass"  
+   class="btn btn-danger ms-2">Exportar a PDF</a>  
+
+<table class="table table-striped">  
+    <thead>  
+        <tr>  
+            <th>Clase</th>  
+            <th>Tipo</th>  
+            <th>Vendedor</th>  
+            <th>Entregados</th>  
+            <th>Vendidos</th>  
+            <th>Bruto</th>  
+            <th>Comisión</th>  
+            <th>Neto</th>  
+        </tr>  
+    </thead>  
+    <tbody>  
+        @foreach (var item in Model)  
+        {  
+            <tr>  
+                <td>@item.SellerType</td>  
+                <td>@item.SellerCategory</td>  
+                <td>@item.SellerName</td>  
+                <td>@item.DeliveredCoupons</td>  
+                <td>@item.SoldCoupons</td>  
+                <td>@item.GrossAmount.ToString("N0")</td>  
+                <td>@item.CommissionAmount.ToString("N0")</td>  
+                <td>@item.NetAmount.ToString("N0")</td>  
+            </tr>  
+        }  
+    </tbody>  
+</table>

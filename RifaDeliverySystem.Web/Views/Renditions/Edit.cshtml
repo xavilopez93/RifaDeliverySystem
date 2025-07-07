@@ -1,9 +1,11 @@
 @model RifaDeliverySystem.Web.Models.Rendition
-@using RifaDeliverySystem.Web.Models
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using RifaDeliverySystem.Web.Extensions;
 @{
     ViewData["Title"] = "Edit Rendition";
 }
 @using System.Globalization
+@using RifaDeliverySystem.Web.Models
 @{
     CultureInfo.CurrentCulture = new CultureInfo("es-PY");
     CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
@@ -12,23 +14,36 @@
 <h1>Editar Rendicion</h1>
 <form asp-action="Edit" method="post">
     <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="VendorId" />
      <div class="mb-3">
-        <label asp-for="VendorId" class="form-label">Vendedor</label>
-        <select asp-for="VendorId" asp-items="ViewBag.Vendors" class="form-select">
+        <label asp-for="Vendor.Name" class="form-label">Vendedor</label>
+       @*  <select asp-for="VendorId" asp-items="ViewBag.Vendors" class="form-select">
             <option value="">-- Seleccione --</option>
-        </select>
-        <span asp-validation-for="VendorId" class="text-danger"></span>
+        </select> *@
+        <input asp-for="Vendor.Name" class="form-control" disabled />
+        @*value="ViewData["VendorName"]" />*@
+        <span asp-validation-for="Vendor.Name" class="text-danger"></span>
     </div>
 
     <h5>Rangos asignados</h5>
     <div class="mb-3">
         <div class="row">
-            @foreach (var item in ViewBag.Ranges)
+            @if (ViewData["CouponRanges"] != null)
             {
-                // _CouponRangeCheckbox muestra (1–1000 | 1 000 cupones)
-                await Html.PartialAsync("_CouponRangeCheckbox",
-                (item, Model.AvailableRanges));
+              @*   @foreach (var item in ViewBag.Ranges)
+                {
+                    // _CouponRangeCheckbox muestra (1–1000 | 1 000 cupones)
+                    await Html.PartialAsync("_CouponRangeCheckbox",
+                    (item, Model.AvailableRanges));
+                } *@
+                @await Html.PartialAsync("_CouponRangeCheckbox", ViewData["CouponRanges"])
             }
+            else
+            {
+                <div class="alert alert-warning">No se encontraron rangos de cupones.</div>
+            }
+
+            
         </div>
         @* <span asp-validation-for="CouponRangeId" class="text-danger"></span> *@
     </div>
@@ -59,20 +74,35 @@
         <label asp-for="EditionNumber">Edition Number</label>
         <input asp-for="EditionNumber" class="form-control" />
     </div>*@
-    <fieldset class="mb-3">
+   @*  <fieldset class="mb-3">
         <legend>Annulments</legend>
         @for (int i = 0; i < 3; i++)
         {
             var reason = (AnnulmentReason)i;
             <div class="d-flex align-items-center mb-2">
                 <label class="me-2">@reason</label>
-                <input name="annulCounts" type="number" min="0" value="0" class="form-control w-25" />
+                <input asp-for="Annulments." type="number" min="0" value="0" class="form-control w-25" />
             </div>
         }
-    </fieldset>
+    </fieldset> *@
 
     <div class="mb-3">
-    <h4>Métodos de Pago</h4>
+        <table class="table" id="paymentsTable">
+            <thead>
+                <tr><th>Forma</th><th>Monto</th><th>Referencia</th><th></th></tr>
+            </thead>
+            <tbody>
+                @for (int i = 0; i < Model.Payments.Count; i++)
+                {
+                    var payment = Model.Payments[i];
+                    ViewData["Index"] = i;
+                    <partial name="_PaymentRow" model="payment" />
+                }
+            </tbody>
+        </table>
+        <button type="button" id="addRow" class="btn btn-secondary">Agregar forma de cobro</button>
+
+    @* <h4>Métodos de Pago</h4>
     <table class="table" id="paymentsTable">
         <thead>
             <tr>
@@ -92,7 +122,7 @@
         </tbody>
     </table>
 
-    <button type="button" id="addRow" class="btn btn-secondary">Agregar forma de cobro</button>
+    <button type="button" id="addRow" class="btn btn-secondary">Agregar forma de cobro</button> *@
     </div>
 
    @*  <div class="mb-3">

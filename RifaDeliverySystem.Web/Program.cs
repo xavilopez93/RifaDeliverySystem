@@ -41,6 +41,14 @@ o.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; o.Cookie.SameSite = Sa
     // sigue protegiendo CSRF
     });
 builder.Services.ConfigureApplicationCookie(o => { o.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; });
+
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options
+        .UseNpgsql(conn, npgsql => npgsql.SetPostgresVersion(new Version(9, 6)))
+        .EnableSensitiveDataLogging()
+        .EnableDetailedErrors()
+);
 var app = builder.Build();
 //using(var scope = app.Services.CreateScope())
 //{
@@ -56,6 +64,7 @@ using (var scope = app.Services.CreateScope())
     await IdentitySeeder.SeedAsync(scope.ServiceProvider);
     DbInitializer.Initialize(db);     // just seeds data, no EnsureCreated
 }   
+
 
 if (!app.Environment.IsDevelopment())
 {

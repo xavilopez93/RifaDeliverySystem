@@ -1,4 +1,16 @@
-﻿@model (SelectListItem item, bool isChecked)
+﻿@model IEnumerable<SelectListItem>
+
+@foreach (var item in Model)
+{
+    <div class="form-check">
+        <input type="checkbox" name="SelectedRanges" value="@item.Value" class="form-check-input" @(item.Selected ? "checked" : "") />
+        <label class="form-check-label">@item.Text</label>
+    </div>
+}
+
+
+
+@* @model (SelectListItem item, bool isChecked)
 
 @{
     var id = "range_" + Model.item.Value;
@@ -23,3 +35,4 @@
         </label>
     </div>
 </div>
+ *@
