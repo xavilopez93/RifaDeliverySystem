@@ -26,7 +26,7 @@ namespace RifaDeliverySystem.Web.Controllers
             var renditions = await _context.Renditions
                 .Include(r => r.Vendor)
                // .Include(r => r.AvailableRanges)
-                .Include(r => r.Annulments)
+                //.Include(r => r.Annulments)
                  .Include(r => r.Payments)
                 .OrderByDescending(r => r.Date)
                 .ToListAsync();
@@ -42,7 +42,7 @@ namespace RifaDeliverySystem.Web.Controllers
             var rendition = await _context.Renditions
                 .Include(r => r.Vendor)
                 .Include(r => r.AvailableRanges)
-                .Include(r => r.Annulments)
+                //.Include(r => r.Annulments)
                 .Include(r => r.Payments)
                 .FirstOrDefaultAsync(r => r.Id == id);
 
@@ -149,8 +149,7 @@ namespace RifaDeliverySystem.Web.Controllers
             }
             await _context.SaveChangesAsync();
 
-            //ViewBag.VendorList = new SelectList(_context.Vendors, "Id", "Name", model.VendorId);
-            //ViewBag.CouponRangeList = new SelectList(_context.CouponRanges, "Id", "DisplayName", model.CouponRanges);
+          
 
             return RedirectToAction(nameof(Index));
         }
@@ -166,7 +165,6 @@ namespace RifaDeliverySystem.Web.Controllers
                 .Include(r => r.Vendor)
                 
         .Include(r => r.Payments)   
-        .Include(r => r.Annulments)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (rendition == null)
@@ -410,7 +408,6 @@ namespace RifaDeliverySystem.Web.Controllers
             var rendition = await _context.Renditions
                 .Include(r => r.Vendor)
                 .Include(r => r.AvailableRanges)
-                .Include(r => r.Annulments)
                 //.Include(r=>r.RaffleEdition)
                 .FirstOrDefaultAsync(r => r.Id == id);
 

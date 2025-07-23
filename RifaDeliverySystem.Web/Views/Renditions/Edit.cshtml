@@ -59,16 +59,26 @@
         <span asp-validation-for="CouponRangeId" class="text-danger"></span>
     </div> *@
     <div class="mb-3">
-        <label asp-for="Date">Date</label>
+        <label asp-for="Date">Fecha</label>
         <input asp-for="Date" type="date" class="form-control" />
     </div>
     <div class="mb-3">
-        <label asp-for="CouponsSold">Coupons Sold</label>
+        <label asp-for="CouponsSold">Cupones Vendidos</label>
         <input asp-for="CouponsSold" class="form-control" />
     </div>
     <div class="mb-3">
-        <label asp-for="CouponsReturned">Coupons Returned</label>
+        <label asp-for="CouponsReturned">Cupones Devueltos</label>
         <input asp-for="CouponsReturned" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Extravio" class="form-label">Cupones Extraviados</label>
+        <input asp-for="Extravio" class="form-control" />
+        <span asp-validation-for="Extravio" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Robo" class="form-label">Cupones Robados</label>
+        <input asp-for="Robo" class="form-control" />
+        <span asp-validation-for="Robo" class="text-danger"></span>
     </div>
   @*  <div class="mb-3">
         <label asp-for="EditionNumber">Edition Number</label>
@@ -177,8 +187,8 @@
                placeholder="Especifique otro" />
         <span asp-validation-for="OtherPayment" class="text-danger"></span>
     </div>*@
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>
 
 

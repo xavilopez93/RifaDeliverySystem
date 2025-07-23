@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Controllers\BulkAnnulmentsController.cs" />
     <Compile Remove="ViewModels\Reports\DeliverySalesReportViewModel.cs" />
   </ItemGroup>
   <ItemGroup>

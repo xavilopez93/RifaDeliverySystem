@@ -83,6 +83,7 @@ app.UseStaticFiles();
 //    SupportedUICultures = supportedCultures
 //});
 
+
 var defaultCulture = new CultureInfo("es-PY");
 CultureInfo.DefaultThreadCurrentCulture = defaultCulture;
 CultureInfo.DefaultThreadCurrentUICulture = defaultCulture;
@@ -95,6 +96,7 @@ app.UseAuthorization();
 app.MapControllerRoute("default", "{controller=Dashboard}/{action=Index}/{id?}");
 app.MapRazorPages();
 app.MapHub<DashboardHub>("/dashboardHub");
+
 
 using (var scope = app.Services.CreateScope())
 {

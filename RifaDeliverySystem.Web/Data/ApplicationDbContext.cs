@@ -19,14 +19,14 @@ namespace RifaDeliverySystem.Web.Data
 
         public DbSet<CouponRange> CouponRanges { get; set; }
         public DbSet<Rendition> Renditions { get; set; }
-        public DbSet<Annulment> Annulments { get; set; }
+        //public DbSet<Annulment> Annulments { get; set; }
         public DbSet<CommissionRule> CommissionRules { get; set; }
         public DbSet<VendorCategory> VendorCategories { get; set; }
         public DbSet<Vendor> Vendors { get; set; }
         // Data/ApplicationDbContext.cs
         public DbSet<CouponReassignment> CouponReassignments { get; set; }
 
-        public DbSet<BulkAnnulment> BulkAnnulments { get; set; }
+        //public DbSet<BulkAnnulment> BulkAnnulments { get; set; }
         public DbSet<RaffleEdition> RaffleEditions { get; set; }
 
         public DbSet<Payment> Payments { get; set; }  
@@ -95,11 +95,11 @@ namespace RifaDeliverySystem.Web.Data
                 .HasForeignKey(r => r.ToVendorId)
                 // switch this FK to Restrict (no cascade)
                 .OnDelete(DeleteBehavior.Restrict);
-            mb.Entity<BulkAnnulment>()
-                  .HasOne(b => b.Vendor)
-                  .WithMany()                   // no tienes colección inversa
-                  .HasForeignKey(b => b.VendorId)
-                  .OnDelete(DeleteBehavior.Cascade);
+            //mb.Entity<BulkAnnulment>()
+            //      .HasOne(b => b.Vendor)
+            //      .WithMany()                   // no tienes colección inversa
+            //      .HasForeignKey(b => b.VendorId)
+            //      .OnDelete(DeleteBehavior.Cascade);
 
             mb.Entity<Payment>(b =>
             {

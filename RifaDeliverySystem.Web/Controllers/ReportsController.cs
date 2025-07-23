@@ -44,7 +44,7 @@ namespace RifaDeliverySystem.Web.Controllers
             var query = _context.Renditions
                 .Include(r => r.Vendor)
                 .Include(r => r.CouponRanges)
-                .Include(r => r.Annulments)
+               // .Include(r => r.Annulments)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(type))
@@ -59,12 +59,12 @@ namespace RifaDeliverySystem.Web.Controllers
                     VendorName = g.Key.Name,
                     Sold = g.Sum(r => r.CouponsSold),
                     Returned = g.Sum(r => r.CouponsReturned),
-                    Annulled = g.SelectMany(r => r.Annulments).Count(),
+                    Annulled = g.Sum(r => r.Extravio + r.Robo),
                     GrossAmount = g.Sum(r => r.CouponsSold * 10000m),
                     CommissionAmount = g.Sum(r => r.CommissionAmount),
                     NetAmount = g.Sum(r => r.Balance),
                     Closed = g.All(r =>
-                        r.CouponsSold + r.CouponsReturned + r.Annulments.Count
+                        r.CouponsSold + r.CouponsReturned + r.Extravio + r.Robo
                         >= (r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1))),
                     SalePercentage = g.Sum(r => r.CouponsSold) * 100m
                                       / g.Sum(r => r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1)) // Corrected denominator
@@ -92,7 +92,7 @@ namespace RifaDeliverySystem.Web.Controllers
             var query = _context.Renditions
                 .Include(r => r.Vendor)
                 .Include(r => r.CouponRanges)
-                .Include(r => r.Annulments)
+                //.Include(r => r.Annulments)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(city))
@@ -108,12 +108,12 @@ namespace RifaDeliverySystem.Web.Controllers
                     Delivered = g.Sum(r => r.CouponsSold),
                     Sold = g.Sum(r => r.CouponsSold),
                     Returned = g.Sum(r => r.CouponsReturned),
-                    Annulled = g.SelectMany(r => r.Annulments).Count(),
+                    Annulled = g.Sum(r => r.Extravio + r.Robo),
                     GrossAmount = g.Sum(r => r.CouponsSold * 10000m),
                     CommissionAmount = g.Sum(r => r.CommissionAmount),
                     NetAmount = g.Sum(r => r.Balance),
                     Closed = g.All(r =>
-                        r.CouponsSold + r.CouponsReturned + r.Annulments.Count
+                        r.CouponsSold + r.CouponsReturned + r.Extravio + r.Robo
 >= (r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1))),
                     SalePercentage = g.Sum(r => r.CouponsSold) * 100m
                                        / g.Sum(r => r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1))
@@ -187,20 +187,20 @@ namespace RifaDeliverySystem.Web.Controllers
 
         // --- Real-time report view ---
         [HttpGet]
-        //public IActionResult RealTime()
-        //    => View();
+        public IActionResult RealTime()
+            => View();
         //public async Task<IActionResult> RealTime()
         //{
         //    var data = await _context.Renditions
-        //        .Include(r => r.)
-        //        .Include(r => r.Seller)
-        //        .GroupBy(r => new { r.Branch.Name, r.Seller.Name })
+        //        //.Include(r => r.CouponRanges)
+        //        .Include(r => r.Vendor)
+        //        .GroupBy(r => new { r.Vendor.Name })
         //        .Select(g => new RealTimeReportItem
         //        {
-        //            BranchName = g.Key.Name,
-        //            SellerName = g.Key.Name1,
-        //            CouponCount = g.Sum(r => r.CouponsCount),
-        //            TotalAmount = g.Sum(r => r.TotalAmount)
+        //            //BranchName = g.Key.Name,
+        //            SellerName = g.Key.Name,
+        //            CouponCount = g.Sum(r => r.CouponRanges.Count),
+        //            TotalAmount = g.Sum(r => r.CouponRanges.Count * 10000)
         //        })
         //        .ToListAsync();
 
@@ -215,7 +215,7 @@ namespace RifaDeliverySystem.Web.Controllers
             var data = await _context.Renditions
                 .Include(r => r.Vendor)
                 .Include(r => r.CouponRanges)
-                .Include(r => r.Annulments)
+               // .Include(r => r.Annulments)
                 .GroupBy(r => new { r.Vendor.Id, r.Vendor.Name })
                 .Select(g => new TypeClassVendorReportItem
                 {
@@ -223,19 +223,19 @@ namespace RifaDeliverySystem.Web.Controllers
                     Delivered = g.Sum(r => r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1)),
                     Sold = g.Sum(r => r.CouponsSold),
                     Returned = g.Sum(r => r.CouponsReturned),
-                    Annulled = g.SelectMany(r => r.Annulments).Count(),
+                    Annulled = g.Sum(r => r.Extravio + r.Robo),
                     GrossAmount = g.Sum(r => r.CouponsSold * 10000m),
                     CommissionAmount = g.Sum(r => r.CommissionAmount),
                     NetAmount = g.Sum(r => r.Balance),
                     Closed = g.All(r =>
-                        r.CouponsSold + r.CouponsReturned + r.Annulments.Count
+                        r.CouponsSold + r.CouponsReturned + r.Extravio + r.Robo
 >= (r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1))),
                     SalePercentage = g.Sum(r => r.CouponsSold) * 100m
                                        / g.Sum(r => r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1))
                 })
                 .ToListAsync();
 
-            return Json(data);
+            return View(data);
         }
 
         // --- Export Real-time to Excel ---
@@ -444,7 +444,7 @@ namespace RifaDeliverySystem.Web.Controllers
                     SellerType = g.Key.Type.ToString(),
                     SellerName = g.Key.Name,
 
-                    DeliveredCoupons = g.Count(),
+                    DeliveredCoupons = g.Sum(t => t.CouponsReturned),
                     SoldCoupons = g.Sum(t => t.CouponsSold),
                     GrossAmount = g.Sum(t => t.CouponsSold * 10000m),
                     CommissionAmount = g.Sum(t => t.CommissionAmount),
@@ -463,7 +463,7 @@ namespace RifaDeliverySystem.Web.Controllers
             worksheet.Cell(1, 1).Value = "Tipo";
             worksheet.Cell(1, 2).Value = "Clase";
             worksheet.Cell(1, 3).Value = "Vendedor";
-            worksheet.Cell(1, 4).Value = "Entregados";
+            worksheet.Cell(1, 4).Value = "Retornados";
             worksheet.Cell(1, 5).Value = "Vendidos";
             worksheet.Cell(1, 6).Value = "Monto Bruto";
             worksheet.Cell(1, 7).Value = "Comisión";
@@ -491,6 +491,37 @@ namespace RifaDeliverySystem.Web.Controllers
                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                        $"ResumenVendedores_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
         }
+        [HttpGet]
+        //public async Task<IActionResult> SummaryByVendor()
+        //{
+        //    var filter = new VendorSummaryFilter
+        //    {
+        //        StartDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-30), DateTimeKind.Utc),
+        //        EndDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+        //    };
+
+        //    // Dropdown de Sucursales
+        //    var branches = await _context.
+        //        .Select(b => new { b.Id, b.Name })
+        //        .ToListAsync();
+        //    ViewBag.Branches = new SelectList(branches, "Id", "Name");
+
+        //    // Dropdown de Tipos de Vendedor
+        //    var vendorTypes = await _context.Vendors
+        //        .Select(v => v.Type)
+        //        .Distinct()
+        //        .ToListAsync();
+        //    ViewBag.VendorTypes = new SelectList(vendorTypes.Select(t => new { Type = t }), "Type", "Type");
+
+        //    // Dropdown de Clases de Vendedor
+        //    var vendorClasses = await _ctx.Vendors
+        //        .Select(v => v.Class)
+        //        .Distinct()
+        //        .ToListAsync();
+        //    ViewBag.VendorClasses = new SelectList(vendorClasses.Select(c => new { Class = c }), "Class", "Class");
+
+        //    return View(filter);
+        //}
 
         public async Task<IActionResult> SummaryByVendor()
         {
@@ -505,6 +536,18 @@ namespace RifaDeliverySystem.Web.Controllers
             //        .Select(c => new SelectListItem { Value = (c.Id).ToString(), Text = c.DisplayName.ToString() })
 
             //};
+
+
+            //var filter = new VendorSummaryFilter
+            //{
+            //    // Establece fechas por defecto como UTC si se desea un rango predeterminado (últimos 30 días por ejemplo)
+            //    StartDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-30), DateTimeKind.Utc),
+            //    EndDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+            //};
+
+
+
+
             // Corrected the return type to pass the list of DeliverySalesReportItem to the view
             var data = await _context.Renditions
                 .Include(t => t.Vendor)
@@ -535,19 +578,30 @@ namespace RifaDeliverySystem.Web.Controllers
             return View(data);
             //return View(model);
         }
+
         [HttpPost]
         public async Task<IActionResult> SummaryByVendor(VendorSummaryFilter filter)
         {
+            // Asegurar que las fechas sean UTC
+            if (filter.StartDate.HasValue)
+                filter.StartDate = DateTime.SpecifyKind(filter.StartDate.Value, DateTimeKind.Utc);
+
+            if (filter.EndDate.HasValue)
+                filter.EndDate = DateTime.SpecifyKind(filter.EndDate.Value, DateTimeKind.Utc);
+
             var query = _context.Renditions
                 .Include(r => r.Vendor)
                 .Include(r => r.CouponRanges)
                 .AsQueryable();
 
-            if (filter.StartDate.HasValue)
-                query = query.Where(r => r.Date >= filter.StartDate.Value.ToUniversalTime());
+            if (filter.StartDate != null)
+                query = query.Where(r => r.Date >= filter.StartDate.Value);
 
-            if (filter.EndDate.HasValue)
-                query = query.Where(r => r.Date <= filter.EndDate.Value.ToUniversalTime());
+            if (filter.EndDate != null)
+                query = query.Where(r => r.Date <= filter.EndDate.Value);
+
+            //if (filter.SelectedClass != null)
+            //    query = query.Where(r => r.r == filter.SelectedBranchId);
 
             if (filter.SelectedType != null)
                 query = query.Where(r => r.Vendor.Type == filter.SelectedType.Type);
@@ -570,26 +624,67 @@ namespace RifaDeliverySystem.Web.Controllers
                     DeliveredCoupons = g.SelectMany(r => r.CouponRanges).Count(),
                     SoldCoupons = g.Sum(t => t.CouponsSold),
                     GrossAmount = g.Sum(t => t.CouponsSold * 10000m),
-                    CommissionAmount = g.Sum(t => t.CommissionAmount),
+                    CommissionAmount = g.Sum(t => t.CommissionAmount)
                 })
                 .ToListAsync();
 
-            foreach (var item in data)
-                item.NetAmount = item.GrossAmount - item.CommissionAmount;
-
-            //filter.Results = data; // Fix: Ensure `filter.Results` is of type `IEnumerable<DeliverySalesReportItem>`.
-
-            // Refill dropdown options
-            filter.TypeOptions = Enum.GetValues(typeof(Vendor))
-                .Cast<Vendor>()
-                .Select(t => new SelectListItem { Value = (t.Type).ToString(), Text = t.Type.ToString() });
-
-            filter.ClassOptions = Enum.GetValues(typeof(VendorCategory))
-                .Cast<VendorCategory>()
-                .Select(c => new SelectListItem { Value = (c.Id).ToString(), Text = c.DisplayName.ToString() });
-
-            return View(filter);
+            return View("SummaryByVendor", data);
         }
+
+        //public async Task<IActionResult> SummaryByVendor(VendorSummaryFilter filter)
+        //{
+        //    var query = _context.Renditions
+        //        .Include(r => r.Vendor)
+        //        .Include(r => r.CouponRanges)
+        //        .AsQueryable();
+
+        //    if (filter.StartDate.HasValue)
+        //        query = query.Where(r => r.Date >= filter.StartDate.Value.ToUniversalTime());
+
+        //    if (filter.EndDate.HasValue)
+        //        query = query.Where(r => r.Date <= filter.EndDate.Value.ToUniversalTime());
+
+        //    if (filter.SelectedType != null)
+        //        query = query.Where(r => r.Vendor.Type == filter.SelectedType.Type);
+
+        //    if (filter.SelectedClass != null)
+        //        query = query.Where(r => r.Vendor.Class == filter.SelectedClass.Class);
+
+        //    var data = await query
+        //        .GroupBy(r => new
+        //        {
+        //            r.Vendor.Class,
+        //            r.Vendor.Type,
+        //            r.Vendor.Name
+        //        })
+        //        .Select(g => new DeliverySalesReportItem
+        //        {
+        //            SellerCategory = g.Key.Class.ToString(),
+        //            SellerType = g.Key.Type.ToString(),
+        //            SellerName = g.Key.Name,
+        //            DeliveredCoupons = g.SelectMany(r => r.CouponRanges).Count(),
+        //            SoldCoupons = g.Sum(t => t.CouponsSold),
+        //            GrossAmount = g.Sum(t => t.CouponsSold * 10000m),
+        //            CommissionAmount = g.Sum(t => t.CommissionAmount),
+        //        })
+        //        .ToListAsync();
+
+        //    foreach (var item in data)
+        //        item.NetAmount = item.GrossAmount - item.CommissionAmount;
+
+        //    //filter.Results = data; // Fix: Ensure `filter.Results` is of type `IEnumerable<DeliverySalesReportItem>`.
+
+        //    // Refill dropdown options
+        //    filter.TypeOptions = Enum.GetValues(typeof(Vendor))
+        //        .Cast<Vendor>()
+        //        .Select(t => new SelectListItem { Value = (t.Type).ToString(), Text = t.Type.ToString() });
+
+        //    filter.ClassOptions = Enum.GetValues(typeof(VendorCategory))
+        //        .Cast<VendorCategory>()
+        //        .Select(c => new SelectListItem { Value = (c.Id).ToString(), Text = c.DisplayName.ToString() });
+
+        //    return View(filter);
+        //}
 
         [HttpGet]
         public async Task<IActionResult> ExportSummaryByVendorPdf([FromQuery] VendorSummaryFilter filter)

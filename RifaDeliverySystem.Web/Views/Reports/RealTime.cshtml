@@ -33,7 +33,11 @@
 </table>
 
 @section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
     <script>
+
+
         const tbody = document.querySelector('#realTimeTable tbody');
         const conn = new signalR.HubConnectionBuilder().withUrl('/dashboardHub').build();
 
@@ -48,7 +52,7 @@
                 <td>${it.delivered}</td>
                 <td>${it.sold}</td>
                 <td>${it.returned}</td>
-                <td>${it.annulled}</td>
+
                 <td>${it.grossAmount.toLocaleString()}</td>
                 <td>${it.commissionAmount.toLocaleString()}</td>
                 <td>${it.netAmount.toLocaleString()}</td>

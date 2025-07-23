@@ -15,7 +15,7 @@
                 asp-for="Type"></select>
     </td>
     <td>
-        <input name="Payments[@idx].Amount" value="@Model.Amount" class="form-control" />
+        <input name="Payments[@idx].Amount" value="@Model.Amount" class="form-control money-input" />
     </td>
     <td>
         <input name="Payments[@idx].ReceiptNumber" value="@Model.ReceiptNumber" class="form-control" />
@@ -28,4 +28,29 @@
 </tr>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('.money-input').forEach(function (input) {
+            input.addEventListener('input', function (e) {
+                let val = input.value.replace(/\D/g, ''); // Solo números
+                if (val) {
+                    input.value = parseFloat(val).toLocaleString('es-PY');
+                } else {
+                    input.value = '';
+                }
+            });
+
+            input.addEventListener('blur', function () {
+                let raw = input.value.replace(/\./g, '').replace(/,/g, '');
+                input.value = parseFloat(raw || 0).toLocaleString('es-PY');
+            });
+
+            input.addEventListener('focus', function () {
+                let raw = input.value.replace(/\./g, '').replace(/,/g, '');
+                input.value = raw;
+            });
+           
+        });
+           
+    </script>
+       
 }

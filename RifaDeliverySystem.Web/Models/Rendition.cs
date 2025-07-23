@@ -38,8 +38,12 @@ namespace RifaDeliverySystem.Web.Models
         [Display(Name = "Cupones devueltos")]
         public int CouponsReturned { get; set; }
 
-        [Display(Name = "Anulaciones")]
-        public ICollection<Annulment> Annulments { get; set; } = new List<Annulment>();
+        public int Extravio { get; set; }
+        public int Robo { get; set; }
+
+
+        //[Display(Name = "Anulaciones")]
+        //public ICollection<Annulment> Annulments { get; set; } = new List<Annulment>();
 
         [Display(Name = "Monto de comisión (Gs.)")]
         [Column(TypeName = "decimal(18,2)")]

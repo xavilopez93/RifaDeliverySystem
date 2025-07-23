@@ -59,6 +59,16 @@
             <input asp-for="CouponsReturned" class="form-control" />
             <span asp-validation-for="CouponsReturned" class="text-danger"></span>
         </div>
+        <div class="col">
+            <label asp-for="Extravio" class="form-label">Cupones Extraviados</label>
+            <input asp-for="Extravio" class="form-control" />
+            <span asp-validation-for="Extravio" class="text-danger"></span>
+        </div>
+        <div class="col">
+            <label asp-for="Robo" class="form-label">Cupones Robados</label>
+            <input asp-for="Robo" class="form-control" />
+            <span asp-validation-for="Robo" class="text-danger"></span>
+        </div>
     </div>
 
     <table class="table" id="paymentsTable">
@@ -169,7 +179,7 @@
             // Grupo 1 = primer número, Grupo 2 = segundo número
             int a = int.Parse(match.Groups[1].Value);
             int b = int.Parse(match.Groups[2].Value);
-             result = b - a;
+             result = b - a + 1;
         }
         else
         {

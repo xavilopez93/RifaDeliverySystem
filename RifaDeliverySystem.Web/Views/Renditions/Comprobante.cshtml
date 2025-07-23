@@ -6,15 +6,17 @@
 
     // Cálculos según el ejemplo de la hoja de Excel
     int unidadesVendidas = Model.CouponsSold;
-    int unidadesAnuladas = Model.Annulments?
-                                .Where(a => a.Reason == "Error de imprenta")
-                                .Sum(a => a.Count) ?? 0;
-    int unidadesExtraviadas = Model.Annulments?
-                                .Where(a => a.Reason == "Extravío")
-                                .Sum(a => a.Count) ?? 0;
-    int unidadesRobadas = Model.Annulments?
-                                .Where(a => a.Reason == "Robo")
-                                .Sum(a => a.Count) ?? 0;
+    // int unidadesAnuladas = Model.Annulments?
+    //                             .Where(a => a.Reason == "Error de imprenta")
+    //                             .Sum(a => a.Count) ?? 0;
+    int unidadesExtraviadas = Model.Extravio;
+    // Annulments?
+    //                             .Where(a => a.Reason == "Extravío")
+    //                             .Sum(a => a.Count) ?? 0;
+    int unidadesRobadas = Model.Robo;
+    // Annulments?
+    //                             .Where(a => a.Reason == "Robo")
+    //                             .Sum(a => a.Count) ?? 0;
     int unidadesRetornadas = Model.CouponsReturned;
 
     int bruto = unidadesVendidas * 10000;                    // Cupones × 10.000
@@ -78,7 +80,7 @@
     <h4>Detalle de rendición de Cupones</h4>
     <ul>
         <li>Cupones Vendidos: @unidadesVendidas unidades</li>
-        <li>Cupones Anulados: @unidadesAnuladas unidades</li>
+      @*   <li>Cupones Anulados: @unidadesAnuladas unidades</li> *@
         <li>Cupones Extraviados: @unidadesExtraviadas unidades</li>
         <li>Cupones Robados: @unidadesRobadas unidades</li>
         <li>Cupones Retornados: @unidadesRetornadas unidades</li>

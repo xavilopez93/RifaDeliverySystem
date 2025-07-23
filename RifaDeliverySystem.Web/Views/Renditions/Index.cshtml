@@ -9,11 +9,19 @@
 }
 
 <h1>Renditions</h1>
-<p><a asp-action="Create" class="btn btn-primary">New Rendition</a></p>
+<p><a asp-action="Create" class="btn btn-primary">Nueva Rendicion</a></p>
 <table class="table">
   <thead>
     <tr>
-      <th>Vendor</th><th>Date</th><th>Sold</th><th>Returned</th><th>Annulled</th><th>% Comm</th><th>Balance</th><th></th>
+            <th>Vendedor</th>
+            <th>Fecha</th>
+            <th>Vendido</th>
+            <th>Retornado</th>
+            <th>Extraviado</th>
+            <th>Robado</th>
+            <th>% Comm</th>
+            <th>Balance</th>
+            <th></th>
     </tr>
   </thead>
   <tbody>
@@ -24,12 +32,13 @@
           <td>@r.Date.ToShortDateString()</td>
           <td>@r.CouponsSold</td>
           <td>@r.CouponsReturned</td>
-          <td>@r.Annulments.Sum(a=>a.Count)</td>
+                <td>@r.Extravio</td>
+                <td>@r.Robo</td>
           <td>@r.CommissionAmount.ToString("%")</td>
           <td>@r.Balance.ToString("C0")</td>
           <td>
-            <a asp-action="Edit" asp-route-id="@r.Id">Edit</a>
-            <a asp-action="Delete" asp-route-id="@r.Id">Delete</a>
+            <a asp-action="Edit" asp-route-id="@r.Id">Editar</a>
+            <a asp-action="Delete" asp-route-id="@r.Id">Eliminar</a>
                     @* <a asp-action="Comprobante" asp-route-id="@r.Id">Comprobante</a> *@
                     <a asp-controller="Renditions" asp-action="PrintReceipt"
                        asp-route-id="@r.Id"

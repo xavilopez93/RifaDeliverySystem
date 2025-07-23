@@ -7,23 +7,23 @@
     CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
 }
 
-<h1>Edit Coupon Range</h1>
+<h1>Editar Rango de Cupon</h1>
 <form asp-action="Edit" method="post">
   <input type="hidden" asp-for="Id" />
   <div class="mb-3">
-    <label asp-for="VendorId" class="form-label">Vendor</label>
+    <label asp-for="VendorId" class="form-label">Vendedor</label>
     <select asp-for="VendorId" asp-items="@(new SelectList(ViewBag.Vendors, "Id", "Name"))" class="form-select"></select>
   </div>
   <div class="mb-3">
-    <label asp-for="StartNumber" class="form-label"></label>
+    <label asp-for="StartNumber" class="form-label">Numero Inicial</label>
     <input asp-for="StartNumber" class="form-control" />
   </div>
   <div class="mb-3">
-    <label asp-for="EndNumber" class="form-label"></label>
+    <label asp-for="EndNumber" class="form-label">Numero Final</label>
     <input asp-for="EndNumber" class="form-control" />
   </div>
-  <button type="submit" class="btn btn-primary">Save</button>
-  <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+  <button type="submit" class="btn btn-primary">Guardar</button>
+  <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

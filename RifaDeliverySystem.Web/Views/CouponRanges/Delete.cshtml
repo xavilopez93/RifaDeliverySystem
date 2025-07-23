@@ -9,12 +9,12 @@
     CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
 }
 
-<h1>Delete Coupon Range</h1>
-<p>Delete range @Model.StartNumber–@Model.EndNumber for @Model.VendorId.?</p>
+<h1>Eliminar rango de cupon</h1>
+<p>Eliminar rango @Model.StartNumber–@Model.EndNumber para @Model.VendorId.?</p>
 <form asp-action="DeleteConfirmed" method="post">
     <input type="hidden" asp-for="Id" />
-    <button type="submit" class="btn btn-danger">Delete</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

@@ -49,7 +49,7 @@ namespace RifaDeliverySystem.Web.Services.Pdf
             // 1) Traemos la rendición con sus dependencias REALES
             var r = await _ctx.Renditions
                               .Include(x => x.Vendor)
-                              .Include(x => x.Annulments)
+                          //    .Include(x => x.Annulments)
                               .Include(x => x.Payments)
                               .FirstOrDefaultAsync(x => x.Id == renditionId);
             if (r is null)
@@ -58,10 +58,10 @@ namespace RifaDeliverySystem.Web.Services.Pdf
             // 2) Cálculos que pide el comprobante
             int deliveredQty = 0; //r.CouponRanges..EndNumber - r.CouponRanges.StartNumber + 1;
             int soldQty = r.CouponsSold;
-            int annulledQty = r.Annulments.Count;
-            int returnedQty = r.CouponsReturned;
-            int lostQty = 0;   // no hay propiedad => 0
-            int stolenQty = 0;
+           // int annulledQty = r.Annulments.Count;
+            int returnedQty = r.CouponsSold;
+            int lostQty = r.Extravio;   // no hay propiedad => 0
+            int stolenQty = r.Robo;
 
             decimal grossGs = soldQty * 10_000m;          // Precio base por cupón
             decimal commissionGs = r.CommissionAmount;
@@ -104,7 +104,7 @@ namespace RifaDeliverySystem.Web.Services.Pdf
                             .UseAllAvailableWidth();
             AddRow("Cupones entregados", deliveredQty, detail);
             AddRow("Cupones vendidos", soldQty, detail);
-            AddRow("Cupones anulados", annulledQty, detail);
+            //AddRow("Cupones anulados", annulledQty, detail);
             AddRow("Cupones extraviados", lostQty, detail);
             AddRow("Cupones robados", stolenQty, detail);
             AddRow("Cupones retornados", returnedQty, detail);

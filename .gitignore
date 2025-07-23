@@ -4,3 +4,5 @@
 
 /RifaDeliverySystem.Web/bin/Debug/net6.0
 /RifaDeliverySystem.Web/obj
+/RifaDeliverySystem.Web/bin/Release/net6.0/win-x64
+/.vs

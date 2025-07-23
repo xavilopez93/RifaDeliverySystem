@@ -8,7 +8,7 @@
     CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
 }
 
-<h1>Create Coupon Range</h1>
+<h1>Crear Rango de Cupon</h1>
 <form asp-action="Create" method="post">
 
     <div class="mb-3">
@@ -21,15 +21,15 @@
   
 
   <div class="mb-3">
-    <label asp-for="StartNumber" class="form-label"></label>
+    <label asp-for="StartNumber" class="form-label">Numero inicial</label>
     <input asp-for="StartNumber" class="form-control" />
   </div>
   <div class="mb-3">
-    <label asp-for="EndNumber" class="form-label"></label>
+    <label asp-for="EndNumber" class="form-label">Numero final</label>
     <input asp-for="EndNumber" class="form-control" />
   </div>
-  <button type="submit" class="btn btn-primary">Save</button>
-  <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+  <button type="submit" class="btn btn-primary">Guardar</button>
+  <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

@@ -9,10 +9,10 @@
     CultureInfo.CurrentUICulture = new CultureInfo("es-PY");
 }
 
-<h1>Coupon Ranges</h1>
-<p><a asp-action="Create" class="btn btn-primary">New Range</a></p>
+<h1>Rangos de Cupones</h1>
+<p><a asp-action="Create" class="btn btn-primary">Nuevo Rango</a></p>
 <table class="table">
-  <thead><tr><th>Vendor</th><th>Start</th><th>End</th><th></th></tr></thead>
+  <thead><tr><th>Vendedor</th><th>Inicio</th><th>Fin</th><th></th></tr></thead>
   <tbody>
         @foreach (var r in Model)
         {
@@ -21,8 +21,8 @@
           <td>@r.StartNumber</td>
           <td>@r.EndNumber</td>
           <td>
-            <a asp-action="Edit" asp-route-id="@r.Id">Edit</a> |
-            <a asp-action="Delete" asp-route-id="@r.Id">Delete</a>
+            <a asp-action="Edit" asp-route-id="@r.Id">Editar</a> |
+            <a asp-action="Delete" asp-route-id="@r.Id">Eliminar</a>
           </td>
         </tr>
         }

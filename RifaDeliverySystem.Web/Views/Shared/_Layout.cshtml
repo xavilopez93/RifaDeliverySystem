@@ -45,26 +45,20 @@
                             <a class="nav-link" asp-controller="Reports" asp-action="Index">Reportes</a>
                         </li> *@
                         <li class="nav-item">
-                            <a class="nav-link" href="/CommissionRules">Commission Rules</a>
+                            <a class="nav-link" href="/CommissionRules">Comisiones</a>
                         </li>
-                        <li class="nav-item"><a class="nav-link" href="/Vendors">Vendors</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/CouponRanges">Ranges</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/Renditions">Renditions</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/Reports/ByTypeClassVendor">Reports</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Vendors">Vendedores</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/CouponRanges">Rangos de cupones</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/Renditions">Rendiciones</a></li>
+                        
                     <li class="nav-item dropdown" >
                         <a class="nav-link dropdown-toggle" href="#" id="adminDrop"
                            role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Admin
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="adminDrop">
-                            <li><a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">Dashboard</a></li>
-                            <li><a class="dropdown-item" asp-controller="Admin" asp-action="RaffleBlocks">Rangos de cupones</a></li>
-                            <li><a class="dropdown-item" asp-controller="Branch" asp-action="Index">Sucursales</a></li>
-                            <li><a class="dropdown-item" asp-controller="Admin" asp-action="Sellers">Vendedores</a></li>
-                            <li><a class="dropdown-item" asp-controller="Reports" asp-action="ByBranchSeller">Reportes</a></li>
-
-
                             <li><a class="dropdown-item" asp-controller="Reports" asp-action="RealTime">Tiempo Real</a></li>
+                            <li><a class="dropdown-item" asp-controller="Reports" asp-action="ByTypeClassVendor">Reporteviejo</a></li>
                             <li><a class="dropdown-item" asp-controller="Reports" asp-action="SummaryByVendor">Vendedores</a></li>
                         </ul>
                     </li>
