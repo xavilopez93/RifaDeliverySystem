@@ -1,4 +1,5 @@
 using ClosedXML.Excel;
+using CsvHelper;
 using iText.Kernel.Pdf;
 using iText.Layout;
 using iText.Layout.Element;
@@ -10,6 +11,8 @@ using RifaDeliverySystem.Web.Models;
 using RifaDeliverySystem.Web.ViewModels.Reports;
 using System;
 using System.Collections.Generic;
+using System.Formats.Asn1;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -491,7 +494,7 @@ namespace RifaDeliverySystem.Web.Controllers
                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                        $"ResumenVendedores_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
         }
-        [HttpGet]
+        //[HttpGet]
         //public async Task<IActionResult> SummaryByVendor()
         //{
         //    var filter = new VendorSummaryFilter
@@ -523,113 +526,145 @@ namespace RifaDeliverySystem.Web.Controllers
         //    return View(filter);
         //}
 
-        public async Task<IActionResult> SummaryByVendor()
+        //public async Task<IActionResult> SummaryByVendor()
+        //{
+        //    //var model = new VendorSummaryFilter
+        //    //{
+        //    //    TypeOptions = Enum.GetValues(typeof(Vendor))
+        //    //        .Cast<Vendor>()
+        //    //        .Select(t => new SelectListItem { Value = (t.Type).ToString(), Text = t.Type.ToString() }),
+
+        //    //    ClassOptions = Enum.GetValues(typeof(VendorCategory))
+        //    //        .Cast<VendorCategory>()
+        //    //        .Select(c => new SelectListItem { Value = (c.Id).ToString(), Text = c.DisplayName.ToString() })
+
+        //    //};
+
+
+        //    //var filter = new VendorSummaryFilter
+        //    //{
+        //    //    // Establece fechas por defecto como UTC si se desea un rango predeterminado (últimos 30 días por ejemplo)
+        //    //    StartDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-30), DateTimeKind.Utc),
+        //    //    EndDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
+        //    //};
+
+
+
+
+        //    // Corrected the return type to pass the list of DeliverySalesReportItem to the view
+        //    var data = await _context.Renditions
+        //        .Include(t => t.Vendor)
+        //        .Where(t => t.VendorId != null)
+        //        .GroupBy(t => new
+        //        {
+        //            t.Vendor.Type,
+        //            t.Vendor.Class,
+        //            t.Vendor.Name
+        //        })
+        //        .Select(g => new DeliverySalesReportItem
+        //        {
+        //            SellerType = g.Key.Type,
+        //            SellerCategory = g.Key.Class,
+        //            SellerName = g.Key.Name,
+        //            DeliveredCoupons = g.Count(),
+        //            SoldCoupons = g.Sum(t => t.CouponsSold),
+        //            GrossAmount = g.Sum(t => t.CouponsSold * 10000m),
+        //            CommissionAmount = g.Sum(t => t.CommissionAmount)
+        //        })
+        //        .ToListAsync();
+
+        //    // Calculate net amount
+        //    foreach (var item in data)
+        //        item.NetAmount = item.GrossAmount - item.CommissionAmount;
+
+        //    // Pass the list to the view instead of attempting to cast it to a single item
+        //    return View(data);
+        //    //return View(model);
+        //}
+
+        [HttpGet]
+        public async Task<IActionResult> SummaryByVendorClass()
         {
-            //var model = new VendorSummaryFilter
-            //{
-            //    TypeOptions = Enum.GetValues(typeof(Vendor))
-            //        .Cast<Vendor>()
-            //        .Select(t => new SelectListItem { Value = (t.Type).ToString(), Text = t.Type.ToString() }),
-
-            //    ClassOptions = Enum.GetValues(typeof(VendorCategory))
-            //        .Cast<VendorCategory>()
-            //        .Select(c => new SelectListItem { Value = (c.Id).ToString(), Text = c.DisplayName.ToString() })
-
-            //};
-
-
-            //var filter = new VendorSummaryFilter
-            //{
-            //    // Establece fechas por defecto como UTC si se desea un rango predeterminado (últimos 30 días por ejemplo)
-            //    StartDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-30), DateTimeKind.Utc),
-            //    EndDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
-            //};
-
-
-
-
-            // Corrected the return type to pass the list of DeliverySalesReportItem to the view
-            var data = await _context.Renditions
-                .Include(t => t.Vendor)
-                .Where(t => t.VendorId != null)
-                .GroupBy(t => new
-                {
-                    t.Vendor.Type,
-                    t.Vendor.Class,
-                    t.Vendor.Name
-                })
-                .Select(g => new DeliverySalesReportItem
-                {
-                    SellerType = g.Key.Type,
-                    SellerCategory = g.Key.Class,
-                    SellerName = g.Key.Name,
-                    DeliveredCoupons = g.Count(),
-                    SoldCoupons = g.Sum(t => t.CouponsSold),
-                    GrossAmount = g.Sum(t => t.CouponsSold * 10000m),
-                    CommissionAmount = g.Sum(t => t.CommissionAmount)
-                })
-                .ToListAsync();
-
-            // Calculate net amount
-            foreach (var item in data)
-                item.NetAmount = item.GrossAmount - item.CommissionAmount;
-
-            // Pass the list to the view instead of attempting to cast it to a single item
-            return View(data);
-            //return View(model);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> SummaryByVendor(VendorSummaryFilter filter)
-        {
-            // Asegurar que las fechas sean UTC
-            if (filter.StartDate.HasValue)
-                filter.StartDate = DateTime.SpecifyKind(filter.StartDate.Value, DateTimeKind.Utc);
-
-            if (filter.EndDate.HasValue)
-                filter.EndDate = DateTime.SpecifyKind(filter.EndDate.Value, DateTimeKind.Utc);
-
-            var query = _context.Renditions
+            var vendors = await _context.Renditions
                 .Include(r => r.Vendor)
-                .Include(r => r.CouponRanges)
-                .AsQueryable();
-
-            if (filter.StartDate != null)
-                query = query.Where(r => r.Date >= filter.StartDate.Value);
-
-            if (filter.EndDate != null)
-                query = query.Where(r => r.Date <= filter.EndDate.Value);
-
-            //if (filter.SelectedClass != null)
-            //    query = query.Where(r => r.r == filter.SelectedBranchId);
-
-            if (filter.SelectedType != null)
-                query = query.Where(r => r.Vendor.Type == filter.SelectedType.Type);
-
-            if (filter.SelectedClass != null)
-                query = query.Where(r => r.Vendor.Class == filter.SelectedClass.Class);
-
-            var data = await query
-                .GroupBy(r => new
+               
+                .GroupBy(r => new { r.Vendor.Id, r.Vendor.Name, r.Vendor.Class })
+                .Select(g => new VendorItemViewModel
                 {
-                    r.Vendor.Class,
-                    r.Vendor.Type,
-                    r.Vendor.Name
-                })
-                .Select(g => new DeliverySalesReportItem
-                {
-                    SellerCategory = g.Key.Class.ToString(),
-                    SellerType = g.Key.Type.ToString(),
-                    SellerName = g.Key.Name,
-                    DeliveredCoupons = g.SelectMany(r => r.CouponRanges).Count(),
-                    SoldCoupons = g.Sum(t => t.CouponsSold),
-                    GrossAmount = g.Sum(t => t.CouponsSold * 10000m),
-                    CommissionAmount = g.Sum(t => t.CommissionAmount)
+                    Name = g.Key.Name,
+                    Sold = g.Sum(r => r.CouponsSold),
+                    Returned = g.Sum(r => r.CouponsReturned),
+                    Extravio = g.Sum(r => r.Extravio),
+                    Robo = g.Sum(r => r.Robo),
+                    Class = g.Key.Class
                 })
                 .ToListAsync();
 
-            return View("SummaryByVendor", data);
+            var grouped = vendors
+                .GroupBy(v => v.Class) // o usar directamente `Class` si viene separado
+                .Select(g => new VendorByClassGroupViewModel
+                {
+                    Class = g.Key,
+                    Vendors = g.ToList()
+                })
+                .OrderBy(g => g.Class)
+                .ToList();
+
+            return View(grouped);
         }
+
+
+        //[HttpPost]
+        //public async Task<IActionResult> SummaryByVendor(VendorSummaryFilter filter)
+        //{
+        //    // Asegurar que las fechas sean UTC
+        //    if (filter.StartDate.HasValue)
+        //        filter.StartDate = DateTime.SpecifyKind(filter.StartDate.Value, DateTimeKind.Utc);
+
+        //    if (filter.EndDate.HasValue)
+        //        filter.EndDate = DateTime.SpecifyKind(filter.EndDate.Value, DateTimeKind.Utc);
+
+        //    var query = _context.Renditions
+        //        .Include(r => r.Vendor)
+        //        .Include(r => r.CouponRanges)
+        //        .AsQueryable();
+
+        //    if (filter.StartDate != null)
+        //        query = query.Where(r => r.Date >= filter.StartDate.Value);
+
+        //    if (filter.EndDate != null)
+        //        query = query.Where(r => r.Date <= filter.EndDate.Value);
+
+        //    //if (filter.SelectedClass != null)
+        //    //    query = query.Where(r => r.r == filter.SelectedBranchId);
+
+        //    if (filter.SelectedTypeId != null)
+        //        query = query.Where(r => r.Vendor.Type = filter.SelectedTypeId.te);
+
+        //    if (filter.SelectedClassId != null)
+        //        query = query.Where(r => r.Vendor.Class == filter.SelectedClass);
+
+        //    var data = await query
+        //        .GroupBy(r => new
+        //        {
+        //            r.Vendor.Class,
+        //            r.Vendor.Type,
+        //            r.Vendor.Name
+        //        })
+        //        .Select(g => new DeliverySalesReportItem
+        //        {
+        //            SellerCategory = g.Key.Class.ToString(),
+        //            SellerType = g.Key.Type.ToString(),
+        //            SellerName = g.Key.Name,
+        //            DeliveredCoupons = g.SelectMany(r => r.CouponRanges).Count(),
+        //            SoldCoupons = g.Sum(t => t.CouponsSold),
+        //            GrossAmount = g.Sum(t => t.CouponsSold * 10000m),
+        //            CommissionAmount = g.Sum(t => t.CommissionAmount)
+        //        })
+        //        .ToListAsync();
+
+        //    return View("SummaryByVendor", data);
+        //}
 
         //public async Task<IActionResult> SummaryByVendor(VendorSummaryFilter filter)
         //{
@@ -700,11 +735,16 @@ namespace RifaDeliverySystem.Web.Controllers
             if (filter.EndDate.HasValue)
                 query = query.Where(r => r.Date <= filter.EndDate.Value);
 
-            if (filter.SelectedType != null)
-                query = query.Where(r => r.Vendor.Type == filter.SelectedType.Type);
-
-            if (filter.SelectedClass != null)
-                query = query.Where(r => r.Vendor.Class == filter.SelectedClass.Class);
+            if (filter.SelectedClassId.HasValue)
+            {
+                var selected = await _context.VendorCategories.FindAsync(filter.SelectedClassId.Value);
+                if (selected != null)
+                {
+                    query = query.Where(r =>
+                        r.Vendor.Type == selected.Type &&
+                        r.Vendor.Class == selected.Class);
+                }
+            }
 
             var data = await query
                 .GroupBy(r => new
@@ -715,8 +755,8 @@ namespace RifaDeliverySystem.Web.Controllers
                 })
                 .Select(g => new DeliverySalesReportItem
                 {
-                    SellerCategory = g.Key.Class.ToString(),
-                    SellerType = g.Key.Type.ToString(),
+                    SellerCategory = g.Key.Class,
+                    SellerType = g.Key.Type,
                     SellerName = g.Key.Name,
                     DeliveredCoupons = g.SelectMany(r => r.CouponRanges).Count(),
                     SoldCoupons = g.Sum(t => t.CouponsSold),
@@ -747,8 +787,8 @@ namespace RifaDeliverySystem.Web.Controllers
 
             foreach (var item in data)
             {
-                table.AddCell(item.SellerCategory);
                 table.AddCell(item.SellerType);
+                table.AddCell(item.SellerCategory);
                 table.AddCell(item.SellerName);
                 table.AddCell(item.DeliveredCoupons.ToString());
                 table.AddCell(item.SoldCoupons.ToString());
@@ -763,6 +803,190 @@ namespace RifaDeliverySystem.Web.Controllers
             var fileName = $"ResumenVendedores_{DateTime.Now:yyyyMMddHHmmss}.pdf";
             return File(stream.ToArray(), "application/pdf", fileName);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ExportSummaryByVendorExcel([FromQuery] VendorSummaryFilter filter)
+        {
+            var query = _context.Renditions
+                .Include(r => r.Vendor)
+                .Include(r => r.CouponRanges)
+                .AsQueryable();
+
+            if (filter.StartDate.HasValue)
+                query = query.Where(r => r.Date >= filter.StartDate.Value);
+
+            if (filter.EndDate.HasValue)
+                query = query.Where(r => r.Date <= filter.EndDate.Value);
+
+            if (filter.SelectedClassId.HasValue)
+            {
+                var selected = await _context.VendorCategories.FindAsync(filter.SelectedClassId.Value);
+                if (selected != null)
+                {
+                    query = query.Where(r =>
+                        r.Vendor.Type == selected.Type &&
+                        r.Vendor.Class == selected.Class);
+                }
+            }
+
+            var summary = await query
+                .GroupBy(r => r.Vendor.Type + " – " + r.Vendor.Class)
+                .Select(g => new
+                {
+                    GroupName = g.Key,
+                    TotalSold = g.Sum(r => r.CouponsSold),
+                    TotalCommission = g.Sum(r => r.CommissionAmount),
+                    TotalBruto = g.Sum(r => r.CouponsSold * 10000m),
+                    TotalNeto = g.Sum(r => r.CouponsSold * 10000m) - g.Sum(r => r.CommissionAmount)
+                })
+                .OrderBy(x => x.GroupName)
+                .ToListAsync();
+
+            using var workbook = new ClosedXML.Excel.XLWorkbook();
+            var ws = workbook.Worksheets.Add("Resumen Vendedores");
+
+            ws.Cell(1, 1).Value = "Grupo";
+            ws.Cell(1, 2).Value = "Total Cupones";
+            ws.Cell(1, 3).Value = "Comisión";
+            ws.Cell(1, 4).Value = "Bruto";
+            ws.Cell(1, 5).Value = "Neto";
+
+            for (int i = 0; i < summary.Count; i++)
+            {
+                var row = i + 2;
+                ws.Cell(row, 1).Value = summary[i].GroupName;
+                ws.Cell(row, 2).Value = summary[i].TotalSold;
+                ws.Cell(row, 3).Value = summary[i].TotalCommission;
+                ws.Cell(row, 4).Value = summary[i].TotalBruto;
+                ws.Cell(row, 5).Value = summary[i].TotalNeto;
+            }
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+
+            var fileName = $"ResumenVendedores_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+            return File(stream.ToArray(),
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        fileName);
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> ExportSummaryByVendorClassPdf()
+        {
+            var data = await GetSummaryByClassData(); // método común abajo
+
+            using var stream = new MemoryStream();
+            using var writer = new StreamWriter(stream);
+            using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
+
+            csv.WriteField("Clase");
+            csv.WriteField("Vendedor");
+            csv.WriteField("Vendidos");
+            csv.WriteField("Retornados");
+            csv.WriteField("Extravio");
+            csv.WriteField("Robo");
+            csv.NextRecord();
+
+            foreach (var group in data)
+            {
+                foreach (var v in group.Vendors)
+                {
+                    csv.WriteField(group.Class);
+                    csv.WriteField(v.Name);
+                    csv.WriteField(v.Sold);
+                    csv.WriteField(v.Returned);
+                    csv.WriteField(v.Extravio);
+                    csv.WriteField(v.Robo);
+                    csv.NextRecord();
+                }
+
+                csv.WriteField(group.Class);
+                csv.WriteField("Subtotal");
+                csv.WriteField(group.TotalSold);
+                csv.WriteField(group.TotalReturned);
+                csv.WriteField(group.TotalExtravio);
+                csv.WriteField(group.TotalRobo);
+                csv.NextRecord();
+            }
+
+            writer.Flush();
+            return File(stream.ToArray(), "text/csv", "ResumenPorClase.csv");
+        }
+        [HttpGet]
+        public async Task<IActionResult> ExportSummaryByVendorClassExcel()
+        {
+            var data = await GetSummaryByClassData();
+
+            using var workbook = new XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Resumen por Clase");
+
+            worksheet.Cell(1, 1).Value = "Clase";
+            worksheet.Cell(1, 2).Value = "Vendedor";
+            worksheet.Cell(1, 3).Value = "Vendidos";
+            worksheet.Cell(1, 4).Value = "Retornados";
+            worksheet.Cell(1, 5).Value = "Extravio";
+            worksheet.Cell(1, 6).Value = "Robo";
+
+            int row = 2;
+
+            foreach (var group in data)
+            {
+                foreach (var v in group.Vendors)
+                {
+                    worksheet.Cell(row, 1).Value = group.Class;
+                    worksheet.Cell(row, 2).Value = v.Name;
+                    worksheet.Cell(row, 3).Value = v.Sold;
+                    worksheet.Cell(row, 4).Value = v.Returned;
+                    worksheet.Cell(row, 5).Value = v.Extravio;
+                    worksheet.Cell(row, 6).Value = v.Robo;
+                    row++;
+                }
+
+                worksheet.Cell(row, 1).Value = group.Class;
+                worksheet.Cell(row, 2).Value = "Subtotal";
+                worksheet.Cell(row, 3).Value = group.TotalSold;
+                worksheet.Cell(row, 4).Value = group.TotalReturned;
+                worksheet.Cell(row, 5).Value = group.TotalExtravio;
+                worksheet.Cell(row, 6).Value = group.TotalRobo;
+
+                worksheet.Row(row).Style.Font.Bold = true;
+                row++;
+            }
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "ResumenPorClase.xlsx");
+        }
+        private async Task<List<VendorByClassGroupViewModel>> GetSummaryByClassData()
+        {
+            var vendors = await _context.Renditions
+                .Include(r => r.Vendor)
+                .GroupBy(r => new { r.Vendor.Id, r.Vendor.Name, r.Vendor.Class })
+                .Select(g => new VendorItemViewModel
+                {
+                    Name = g.Key.Name,
+                    Sold = g.Sum(r => r.CouponsSold),
+                    Returned = g.Sum(r => r.CouponsReturned),
+                    Extravio = g.Sum(r => r.Extravio),
+                    Robo = g.Sum(r => r.Robo),
+                    Class = g.Key.Class
+                })
+                .ToListAsync();
+
+            var grouped = vendors
+                .GroupBy(v => v.Class) // o directamente v.Class si viene separado
+                .Select(g => new VendorByClassGroupViewModel
+                {
+                    Class = g.Key,
+                    Vendors = g.ToList()
+                })
+                .OrderBy(g => g.Class)
+                .ToList();
+
+            return grouped;
+        }
+
 
         // ----- DTO classes for reports -----
         //public class TypeClassVendorReportItem

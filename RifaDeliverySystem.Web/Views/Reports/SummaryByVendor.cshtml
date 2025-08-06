@@ -1,72 +1,68 @@
-﻿@*BySellerBreakdown*@
+﻿@model RifaDeliverySystem.Web.ViewModels.Reports.VendorSummaryFilter
 
-@using Microsoft.AspNetCore.Mvc.Rendering  
-@using RifaDeliverySystem.Web.Extensions  
-@model List<RifaDeliverySystem.Web.ViewModels.Reports.DeliverySalesReportItem>  
+@{
+    ViewData["Title"] = "Resumen por Vendedor";
+}
 
-<form asp-action="SummaryByVendor" method="post" class="row mb-4">
-    <div class="col-md-3">          
-        <label>Desde</label>  
-        <input type="date" name="StartDate" class="form-control" value="@Model.FirstOrDefault()?.StartDate?.ToString()" />  
-    </div>  
-    <div class="col-md-3">  
-        <label>Hasta</label>  
-        <input type="date" name="EndDate" class="form-control" value="@Model.FirstOrDefault()?.EndDate?.ToString()" />  
-    </div>  
-    <div class="col-md-3">  
-        <label>Tipo</label>  
-        <select name="SelectedType" class="form-control" asp-items="Model.FirstOrDefault()?.TypeOptions">  
-            <option value="">Todos</option>  
-        </select>  
-    </div>  
-    <div class="col-md-3">  
-        <label>Clase</label>  
-        <select name="SelectedClass" class="form-control" asp-items="Model.FirstOrDefault()?.ClassOptions">  
-            <option value="">Todos</option>  
-        </select>  
-    </div>  
-    <div class="col-md-12 mt-3">  
-        <button type="submit" class="btn btn-primary">Filtrar</button>  
-    </div>  
-</form>  
+<h2>Resumen por Vendedor</h2>
 
-<a asp-action="ExportSummaryByVendor" asp-route-StartDate="@Model.FirstOrDefault()?.StartDate?.ToString()"  
-   asp-route-EndDate="@Model.FirstOrDefault()?.EndDate?.ToString()"  
-   asp-route-SelectedType="@Model.FirstOrDefault()?.SelectedType"  
-   asp-route-SelectedClass="@Model.FirstOrDefault()?.SelectedClass"  
-   class="btn btn-success">Exportar a Excel</a>  
-<a asp-action="ExportSummaryByVendorPdf" asp-route-StartDate="@Model.FirstOrDefault()?.StartDate?.ToString()"  
-   asp-route-EndDate="@Model.FirstOrDefault()?.EndDate?.ToString()"  
-   asp-route-SelectedType="@Model.FirstOrDefault()?.SelectedType"  
-   asp-route-SelectedClass="@Model.FirstOrDefault()?.SelectedClass"  
-   class="btn btn-danger ms-2">Exportar a PDF</a>  
+<form method="get" class="row g-3 mb-4">
+    <div class="col-md-4">
+        <label>Clase</label>
+        <select asp-for="SelectedClassId" asp-items="Model.ClassOptions" class="form-select">
+            <option value="">-- Todas --</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label>Desde</label>
+        <input asp-for="StartDate" type="date" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label>Hasta</label>
+        <input asp-for="EndDate" type="date" class="form-control" />
+    </div>
+    <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+    </div>
+</form>
 
-<table class="table table-striped">  
-    <thead>  
-        <tr>  
-            <th>Clase</th>  
-            <th>Tipo</th>  
-            <th>Vendedor</th>  
-            <th>Entregados</th>  
-            <th>Vendidos</th>  
-            <th>Bruto</th>  
-            <th>Comisión</th>  
-            <th>Neto</th>  
-        </tr>  
-    </thead>  
-    <tbody>  
-        @foreach (var item in Model)  
-        {  
-            <tr>  
-                <td>@item.SellerType</td>  
-                <td>@item.SellerCategory</td>  
-                <td>@item.SellerName</td>  
-                <td>@item.DeliveredCoupons</td>  
-                <td>@item.SoldCoupons</td>  
-                <td>@item.GrossAmount.ToString("N0")</td>  
-                <td>@item.CommissionAmount.ToString("N0")</td>  
-                <td>@item.NetAmount.ToString("N0")</td>  
-            </tr>  
-        }  
-    </tbody>  
-</table>
+@if (Model.Results != null && Model.Results.Any())
+{
+    <div class="mb-3">
+        <a asp-action="ExportSummaryByVendorPdf"
+           asp-route-StartDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+           asp-route-EndDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+           asp-route-SelectedClassId="@Model.SelectedClassId"
+           class="btn btn-danger me-2">Exportar PDF</a>
+
+        <a asp-action="ExportSummaryByVendorExcel"
+           asp-route-StartDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+           asp-route-EndDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+           asp-route-SelectedClassId="@Model.SelectedClassId"
+           class="btn btn-success">Exportar Excel</a>
+    </div>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Grupo</th>
+                <th>Total Cupones</th>
+                <th>Total Comisión</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Results)
+            {
+                <tr>
+                    <td>@item.GroupName</td>
+                    <td>@item.TotalSold</td>
+                    <td>@item.TotalCommission.ToString("N0") Gs</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p class="text-muted">No se encontraron resultados con esos filtros.</p>
+}

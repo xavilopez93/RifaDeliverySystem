@@ -1,0 +1,50 @@
+﻿@model List<RifaDeliverySystem.Web.ViewModels.Reports.VendorByClassGroupViewModel>
+
+@{
+    ViewData["Title"] = "Resumen por Clase";
+}
+
+<h2>@ViewData["Title"]</h2>
+<div class="mb-3">
+    <a asp-action="ExportSummaryByVendorClassPdf" class="btn btn-outline-primary me-2">
+        Exportar CSV
+    </a>
+    <a asp-action="ExportSummaryByVendorClassExcel" class="btn btn-outline-success">
+        Exportar Excel
+    </a>
+</div>
+
+@foreach (var group in Model)
+{
+    <h3>Clase: @group.Class</h3>
+    <table class="table table-bordered table-sm">
+        <thead>
+            <tr>
+                <th>Vendedor</th>
+                <th>Vendidos</th>
+                <th>Retornados</th>
+                <th>Extravio</th>
+                <th>Robo</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var v in group.Vendors)
+            {
+                <tr>
+                    <td>@v.Name</td>
+                    <td>@v.Sold</td>
+                    <td>@v.Returned</td>
+                    <td>@v.Extravio</td>
+                    <td>@v.Robo</td>
+                </tr>
+            }
+            <tr class="fw-bold text-end table-secondary">
+                <td class="text-start">Subtotal</td>
+                <td>@group.TotalSold</td>
+                <td>@group.TotalReturned</td>
+                <td>@group.TotalExtravio</td>
+                <td>@group.TotalRobo</td>
+            </tr>
+        </tbody>
+    </table>
+}

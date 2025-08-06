@@ -49,17 +49,19 @@ namespace RifaDeliverySystem.Web.Services.Pdf
             // 1) Traemos la rendición con sus dependencias REALES
             var r = await _ctx.Renditions
                               .Include(x => x.Vendor)
-                          //    .Include(x => x.Annulments)
+                              .Include(x => x.CouponRanges)  // Rango de cupones (puede ser varios)
+                                                             //    .Include(x => x.Annulments)
                               .Include(x => x.Payments)
                               .FirstOrDefaultAsync(x => x.Id == renditionId);
             if (r is null)
                 throw new KeyNotFoundException("Rendición no encontrada");
 
             // 2) Cálculos que pide el comprobante
-            int deliveredQty = 0; //r.CouponRanges..EndNumber - r.CouponRanges.StartNumber + 1;
+            int deliveredQty = r.CouponRanges.OfType<CouponRange>().Sum(cr => cr.EndNumber - cr.StartNumber + 1);
+            
             int soldQty = r.CouponsSold;
            // int annulledQty = r.Annulments.Count;
-            int returnedQty = r.CouponsSold;
+            int returnedQty = r.CouponsReturned;
             int lostQty = r.Extravio;   // no hay propiedad => 0
             int stolenQty = r.Robo;
 

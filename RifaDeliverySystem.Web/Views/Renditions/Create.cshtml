@@ -36,37 +36,28 @@
 <span asp-validation-for="RangeIds" class="text-danger"></span>
     </div>
 
- 
-
     <p>Total de cupones seleccionados: <strong id="totalCoupons">0</strong></p>
-
-    @* <div class="mb-3">
-        <label asp-for="CouponRangeId" class="form-label">Rango de Cupones</label>
-        <select asp-for="CouponRangeId" asp-items="ViewBag.Ranges" class="form-select">
-            <option value="">-- Seleccione --</option>
-        </select>
-        <span asp-validation-for="CouponRangeId" class="text-danger"></span>
-    </div> *@
+    <input asp-for="Balance" class="form-control money-input" id="balanceField" />
 
     <div class="row">
         <div class="col">
             <label asp-for="CouponsSold" class="form-label">Cupones Vendidos</label>
-            <input asp-for="CouponsSold" class="form-control" />
+            <input asp-for="CouponsSold" class="form-control money-input" />
             <span asp-validation-for="CouponsSold" class="text-danger"></span>
         </div>
         <div class="col">
             <label asp-for="CouponsReturned" class="form-label">Cupones Devueltos</label>
-            <input asp-for="CouponsReturned" class="form-control" />
+            <input asp-for="CouponsReturned" class="form-control money-input" />
             <span asp-validation-for="CouponsReturned" class="text-danger"></span>
         </div>
         <div class="col">
             <label asp-for="Extravio" class="form-label">Cupones Extraviados</label>
-            <input asp-for="Extravio" class="form-control" />
+            <input asp-for="Extravio" class="form-control money-input" />
             <span asp-validation-for="Extravio" class="text-danger"></span>
         </div>
         <div class="col">
             <label asp-for="Robo" class="form-label">Cupones Robados</label>
-            <input asp-for="Robo" class="form-control" />
+            <input asp-for="Robo" class="form-control money-input" />
             <span asp-validation-for="Robo" class="text-danger"></span>
         </div>
     </div>
@@ -75,57 +66,30 @@
         <thead>
             <tr><th>Forma</th><th>Monto</th><th>Referencia</th><th></th></tr>
         </thead>
-        <tbody>
-            @for (int i = 0; i < Model.Payments.Count; i++)
-            {
-                var payment = Model.Payments[i];
-                ViewData["Index"] = i;
-                <partial name="_PaymentRow" model="payment" />
-            }
-        </tbody>
+        <tbody id="paymentContainer">
+    @for (int i = 0; i < Model.Payments.Count; i++)
+    {
+        var paymentViewData = new ViewDataDictionary(ViewData)
+        {
+            { "HtmlFieldPrefix", $"Payments[{i}]" }
+        };
+
+        <partial name="_PaymentRow" model="Model.Payments[i]" view-data="paymentViewData" />
+    }
+</tbody>
+
     </table>
-    <button type="button" id="addRow" class="btn btn-secondary">Agregar forma de cobro</button>
-    <!-- checkboxes for payment methods -->
-  @*   <div class="mb-3">
-        <label class="form-label">Métodos de Pago</label><br />
-
-        <input type="checkbox"
-               name="PaymentMethods"
-               value="Transferencia"
-               @(Model.PaymentMethods.Contains("Transferencia") ? "checked" : "") />
-        Transferencia<br />
-
-        <input type="checkbox"
-               name="PaymentMethods"
-               value="Efectivo"
-               @(Model.PaymentMethods.Contains("Efectivo") ? "checked" : "") />
-        Efectivo<br />
-
-        <input type="checkbox"
-               name="PaymentMethods"
-               value="Depósito"
-               @(Model.PaymentMethods.Contains("Depósito") ? "checked" : "") />
-        Depósito<br />
-
-        <input type="checkbox"
-               name="PaymentMethods"
-               value="Giro"
-               @(Model.PaymentMethods.Contains("Giro") ? "checked" : "") />
-        Giro<br />
-
-        <input type="checkbox"
-               name="PaymentMethods"
-               value="Otro"
-               @(Model.PaymentMethods.Contains("Otro") ? "checked" : "") />
-        Otro<br />
-
-        <input asp-for="OtherPayment"
-               class="form-control mt-1"
-               placeholder="Especifique otro" />
-        <span asp-validation-for="OtherPayment" class="text-danger"></span>
+    <div class="mt-2">
+        <strong>Total Pagado: </strong><span id="totalAmountDisplay">0</span> Gs.
     </div>
- *@
-    <button type="submit" class="btn btn-primary">Guardar</button>
+    <div id="balanceWarning" class="text-danger mt-1" style="display: none;">
+     El total de pagos supera el saldo a rendir.
+</div>
+
+    <button type="button" id="addRow" class="btn btn-secondary">Agregar forma de cobro</button>
+    
+    <button type="submit" class="btn btn-primary" id="submitBtn">Guardar</button>
+
     <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>
 
@@ -135,12 +99,21 @@
     <link  href="~/lib/select2/css/select2.min.css" rel="stylesheet" />
     <script>
         document.getElementById('addRow').addEventListener('click', () => {
-            fetch('@Url.Action("EmptyPaymentRow", "Renditions")')
-              .then(r => r.text())
-              .then(html => {
-                  document.querySelector('#paymentsTable tbody').insertAdjacentHTML('beforeend', html);
-                  renumerateIndexes();          // ajusta name="Payments[i].Amount" …
-              });
+let currentIndex = document.querySelectorAll('.payment-row').length;
+
+fetch(window.location.origin + '/Renditions/EmptyPaymentRow')
+
+    .then(res => res.text())
+    .then(html => {
+        const prefixed = html.replaceAll('name="Amount"', `name="Payments[${currentIndex}].Amount"`)
+                             .replaceAll('name="Type"', `name="Payments[${currentIndex}].Type"`)
+                             .replaceAll('name="ReceiptNumber"', `name="Payments[${currentIndex}].ReceiptNumber"`)
+                             .replaceAll('id="Amount"', `id="Payments_${currentIndex}__Amount"`); // para evitar duplicados
+
+        document.getElementById('paymentContainer').insertAdjacentHTML('beforeend', prefixed);
+        afterNewPaymentRowAdded(); // reaplica eventos y validación
+    });
+
         });
         document.addEventListener('click', e => {
             if (e.target.closest('.remove-row')) {
@@ -208,10 +181,90 @@
         $('.select2').on('change', updateTotal);
 
 
-          $('#VendorId').on('change', function () {
-        const vid = $(this).val();
-        // recarga la misma vista con el vendorId como querystring
-        window.location = '@Url.Action("Create","Renditions")' + '?vendorId=' + vid;
+        $('#VendorId').on('change', function () {
+            const vid = $(this).val();
+            // recarga la misma vista con el vendorId como querystring
+            window.location = '@Url.Action("Create","Renditions")' + '?vendorId=' + vid;
+        });
+
+
+      function normalizeToDecimal(str) {
+        return str.replace(/\./g, '').replace(',', '.');
+    }
+
+    function updateTotalAmount() {
+        let total = 0;
+        let hasValid = false;
+
+        document.querySelectorAll('.payment-amount').forEach(function (input) {
+            const raw = normalizeToDecimal(input.value);
+            const val = parseFloat(raw);
+            if (!isNaN(val) && val > 0) {
+                total += val;
+                hasValid = true;
+            }
+        });
+
+        const totalDisplay = document.getElementById('totalAmountDisplay');
+        if (totalDisplay)
+            totalDisplay.innerText = total.toLocaleString('es-PY', { maximumFractionDigits: 0 });
+
+        const balanceField = document.getElementById('balanceField');
+        const warning = document.getElementById('balanceWarning');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (balanceField && warning && submitBtn) {
+            const balanceValue = parseFloat(normalizeToDecimal(balanceField.value)) || 0;
+
+            if (!hasValid || total > balanceValue) {
+                warning.style.display = total > balanceValue ? 'block' : 'none';
+                submitBtn.disabled = true;
+            } else {
+                warning.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        }
+    }
+
+    function attachMoneyBehavior(input) {
+        input.addEventListener('input', function () {
+            const raw = input.value.replace(/\D/g, '');
+            if (raw)
+                input.value = Number(raw).toLocaleString('es-PY');
+
+            updateTotalAmount();
+        });
+
+        const form = input.closest('form');
+        if (form) {
+            form.addEventListener('submit', function () {
+                input.value = normalizeToDecimal(input.value);
+            });
+        }
+
+        if (input.value)
+            input.value = Number(normalizeToDecimal(input.value)).toLocaleString('es-PY');
+    }
+
+    function rebindMoneyInputs() {
+        document.querySelectorAll('.money-input').forEach(function (input) {
+            // Previene duplicar listeners si ya fue inicializado
+            if (!input.dataset.bound) {
+                attachMoneyBehavior(input);
+                input.dataset.bound = "true";
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        rebindMoneyInputs();
+        updateTotalAmount();
     });
+
+
+    function afterNewPaymentRowAdded() {
+        rebindMoneyInputs();
+        updateTotalAmount();
+    }
     </script>
 }

@@ -17,11 +17,9 @@
     <input type="hidden" asp-for="VendorId" />
      <div class="mb-3">
         <label asp-for="Vendor.Name" class="form-label">Vendedor</label>
-       @*  <select asp-for="VendorId" asp-items="ViewBag.Vendors" class="form-select">
-            <option value="">-- Seleccione --</option>
-        </select> *@
+     
         <input asp-for="Vendor.Name" class="form-control" disabled />
-        @*value="ViewData["VendorName"]" />*@
+      
         <span asp-validation-for="Vendor.Name" class="text-danger"></span>
     </div>
 
@@ -30,12 +28,7 @@
         <div class="row">
             @if (ViewData["CouponRanges"] != null)
             {
-              @*   @foreach (var item in ViewBag.Ranges)
-                {
-                    // _CouponRangeCheckbox muestra (1–1000 | 1 000 cupones)
-                    await Html.PartialAsync("_CouponRangeCheckbox",
-                    (item, Model.AvailableRanges));
-                } *@
+            
                 @await Html.PartialAsync("_CouponRangeCheckbox", ViewData["CouponRanges"])
             }
             else
@@ -45,149 +38,71 @@
 
             
         </div>
-        @* <span asp-validation-for="CouponRangeId" class="text-danger"></span> *@
+    
     </div>
 
     <p>Total de cupones seleccionados: <strong id="totalCoupons">0</strong></p>
 
 
-   @*  <div class="mb-3">
-        <label asp-for="CouponRangeId" class="form-label">Rango de Cupones</label>
-        <select asp-for="CouponRangeId" asp-items="ViewBag.Ranges" class="form-select">
-            <option value="">-- Seleccione --</option>
-        </select>
-        <span asp-validation-for="CouponRangeId" class="text-danger"></span>
-    </div> *@
+ 
     <div class="mb-3">
         <label asp-for="Date">Fecha</label>
         <input asp-for="Date" type="date" class="form-control" />
     </div>
     <div class="mb-3">
         <label asp-for="CouponsSold">Cupones Vendidos</label>
-        <input asp-for="CouponsSold" class="form-control" />
+        <input asp-for="CouponsSold" class="form-control money-input" />
     </div>
     <div class="mb-3">
         <label asp-for="CouponsReturned">Cupones Devueltos</label>
-        <input asp-for="CouponsReturned" class="form-control" />
+        <input asp-for="CouponsReturned" class="form-control money-input" />
     </div>
     <div class="mb-3">
         <label asp-for="Extravio" class="form-label">Cupones Extraviados</label>
-        <input asp-for="Extravio" class="form-control" />
+        <input asp-for="Extravio" class="form-control money-input" />
         <span asp-validation-for="Extravio" class="text-danger"></span>
     </div>
     <div class="mb-3">
         <label asp-for="Robo" class="form-label">Cupones Robados</label>
-        <input asp-for="Robo" class="form-control" />
+        <input asp-for="Robo" class="form-control money-input" />
         <span asp-validation-for="Robo" class="text-danger"></span>
     </div>
-  @*  <div class="mb-3">
-        <label asp-for="EditionNumber">Edition Number</label>
-        <input asp-for="EditionNumber" class="form-control" />
-    </div>*@
-   @*  <fieldset class="mb-3">
-        <legend>Annulments</legend>
-        @for (int i = 0; i < 3; i++)
-        {
-            var reason = (AnnulmentReason)i;
-            <div class="d-flex align-items-center mb-2">
-                <label class="me-2">@reason</label>
-                <input asp-for="Annulments." type="number" min="0" value="0" class="form-control w-25" />
-            </div>
-        }
-    </fieldset> *@
+ 
 
     <div class="mb-3">
         <table class="table" id="paymentsTable">
             <thead>
                 <tr><th>Forma</th><th>Monto</th><th>Referencia</th><th></th></tr>
             </thead>
-            <tbody>
+            <tbody id="paymentContainer">
                 @for (int i = 0; i < Model.Payments.Count; i++)
                 {
-                    var payment = Model.Payments[i];
-                    ViewData["Index"] = i;
-                    <partial name="_PaymentRow" model="payment" />
+                    var paymentViewData = new ViewDataDictionary(ViewData)
+                                {
+                                { "HtmlFieldPrefix", $"Payments[{i}]" }
+                                };
+
+                    <partial name="_PaymentRow" model="Model.Payments[i]" view-data="paymentViewData" />
                 }
             </tbody>
+
         </table>
+
+        <div class="mt-2">
+            <strong>Total Pagado: </strong><span id="totalAmountDisplay">0</span> Gs.
+        </div>
+
+        <div id="balanceWarning" class="text-danger mt-1" style="display: none;">
+             El total de pagos supera el saldo a rendir.
+        </div>
+
         <button type="button" id="addRow" class="btn btn-secondary">Agregar forma de cobro</button>
 
-    @* <h4>Métodos de Pago</h4>
-    <table class="table" id="paymentsTable">
-        <thead>
-            <tr>
-                <th>Forma</th>
-                <th>Monto</th>
-                <th>Referencia</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-                @for (int i = 0; i < Model.Payments.Count; i++)
-                {
-                    var payment = Model.Payments[i];
-                    ViewData["Index"] = i;
-                    <partial name="_PaymentRow" model="payment" />
-                }
-        </tbody>
-    </table>
-
-    <button type="button" id="addRow" class="btn btn-secondary">Agregar forma de cobro</button> *@
+  
     </div>
 
-   @*  <div class="mb-3">
-        <label class="form-label">Métodos de Pago</label><br />
+    <button type="submit" class="btn btn-primary" id="submitBtn">Guardar</button>
 
-        <input type="checkbox"
-               name="PaymentMethods"
-               value="Transferencia"
-               @(Model.PaymentMethods.Contains("Transferencia") ? "checked" : "") />
-        Transferencia<br />
-
-        <input type="checkbox"
-               name="PaymentMethods"
-               value="Efectivo"
-               @(Model.PaymentMethods.Contains("Efectivo") ? "checked" : "") />
-        Efectivo<br />
-
-        <input type="checkbox"
-               name="PaymentMethods"
-               value="Depósito"
-               @(Model.PaymentMethods.Contains("Depósito") ? "checked" : "") />
-        Depósito<br />
-
-        <input type="checkbox"
-               name="PaymentMethods"
-               value="Giro"
-               @(Model.PaymentMethods.Contains("Giro") ? "checked" : "") />
-        Giro<br />
-
-        <input type="checkbox"
-               name="PaymentMethods"
-               value="Otro"
-               @(Model.PaymentMethods.Contains("Otro") ? "checked" : "") />
-        Otro<br />
-
-        <input asp-for="OtherPayment"
-               class="form-control mt-1"
-               placeholder="Especifique otro" />
-        <span asp-validation-for="OtherPayment" class="text-danger"></span>
-    </div>
- *@
-   @* <div class="mb-3">
-        <label asp-for="PaymentMethods" class="form-label">Métodos de Pago</label>
-        <select asp-for="PaymentMethods"
-                asp-items="ViewBag.PaymentMethodsList"
-                multiple="multiple"
-                class="form-select">
-        </select>
-        <span asp-validation-for="PaymentMethods" class="text-danger"></span>
-
-        <input asp-for="OtherPayment" class="form-control mt-1"
-               placeholder="Especifique otro" />
-        <span asp-validation-for="OtherPayment" class="text-danger"></span>
-    </div>*@
-    <button type="submit" class="btn btn-primary">Guardar</button>
     <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>
 
@@ -196,12 +111,20 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         document.getElementById('addRow').addEventListener('click', () => {
-            fetch('@Url.Action("EmptyPaymentRow", "Renditions")')
-              .then(r => r.text())
-              .then(html => {
-                  document.querySelector('#paymentsTable tbody').insertAdjacentHTML('beforeend', html);
-                  renumerateIndexes();
-              });
+                  let currentIndex = document.querySelectorAll('.payment-row').length;
+
+        fetch('/Renditions/EmptyPaymentRow')
+            .then(res => res.text())
+            .then(html => {
+                const prefixed = html.replaceAll('name="Amount"', `name="Payments[${currentIndex}].Amount"`)
+                                     .replaceAll('name="Type"', `name="Payments[${currentIndex}].Type"`)
+                                     .replaceAll('name="ReceiptNumber"', `name="Payments[${currentIndex}].ReceiptNumber"`)
+                                     .replaceAll('id="Amount"', `id="Payments_${currentIndex}__Amount"`); // para evitar duplicados
+
+                document.getElementById('paymentContainer').insertAdjacentHTML('beforeend', prefixed);
+                afterNewPaymentRowAdded(); // reaplica eventos y validación
+            });
+
         });
 
         document.addEventListener('click', e => {
@@ -222,14 +145,72 @@
                 });
             });
         }
-        function updateTotal() {
-            let total = 0;
-            $('input[name="RangeIds"]:checked').each(function () {
-                total += parseInt($(this).data('qty'));
-            });
-            $('#totalCoupons').text(total);
+                 function normalizeToDecimal(str) {
+            return str.replace(/\./g, '').replace(',', '.');
         }
-        updateTotal();
-        $(document).on('change', 'input[name="RangeIds"]', updateTotal);
+
+        function updateTotalAmount() {
+            let total = 0;
+            let hasValid = false;
+
+            document.querySelectorAll('.payment-amount').forEach(function (input) {
+                const raw = normalizeToDecimal(input.value);
+                const val = parseFloat(raw);
+                if (!isNaN(val) && val > 0) {
+                    total += val;
+                    hasValid = true;
+                }
+            });
+
+            const totalDisplay = document.getElementById('totalAmountDisplay');
+            if (totalDisplay)
+                totalDisplay.innerText = total.toLocaleString('es-PY', { maximumFractionDigits: 0 });
+
+            const balanceField = document.getElementById('balanceField');
+            const warning = document.getElementById('balanceWarning');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (balanceField && warning && submitBtn) {
+                const balanceValue = parseFloat(normalizeToDecimal(balanceField.value)) || 0;
+
+                if (!hasValid || total > balanceValue) {
+                    warning.style.display = total > balanceValue ? 'block' : 'none';
+                    submitBtn.disabled = true;
+                } else {
+                    warning.style.display = 'none';
+                    submitBtn.disabled = false;
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.money-input').forEach(function (input) {
+                input.addEventListener('input', function () {
+                    const raw = input.value.replace(/\D/g, '');
+                    if (raw)
+                        input.value = Number(raw).toLocaleString('es-PY');
+
+                    updateTotalAmount();
+                });
+
+                const form = input.closest('form');
+                if (form) {
+                    form.addEventListener('submit', function () {
+                        input.value = normalizeToDecimal(input.value);
+                    });
+                }
+
+                if (input.value)
+                    input.value = Number(normalizeToDecimal(input.value)).toLocaleString('es-PY');
+            });
+
+            document.body.addEventListener('input', function (e) {
+                if (e.target.classList.contains('payment-amount') || e.target.classList.contains('money-input')) {
+                    updateTotalAmount();
+                }
+            });
+
+            updateTotalAmount();
+        });
     </script>
 }
