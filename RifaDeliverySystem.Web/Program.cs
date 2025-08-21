@@ -6,6 +6,7 @@ using RifaDeliverySystem.Web.Data;
 using RifaDeliverySystem.Web.Hubs;
 using RifaDeliverySystem.Web.Services.Pdf;
 using System.Globalization;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 var conn = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -49,6 +50,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         .EnableSensitiveDataLogging()
         .EnableDetailedErrors()
 );
+
+QuestPDF.Settings.License = LicenseType.Community;
 var app = builder.Build();
 //using(var scope = app.Services.CreateScope())
 //{

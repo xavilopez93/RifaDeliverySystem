@@ -15,11 +15,26 @@
 
 
 <h1>@ViewData["Title"]</h1>
+@{
+    var type = Context.Request.Query["type"].ToString();
+    var vendorClass = Context.Request.Query["vendorClass"].ToString();
+}
 
+<div class="mb-2 d-flex gap-2">
+    <a class="btn btn-outline-success"
+       href="@Url.Action("ExportByTypeClassVendorExcel", "Reports", new { type, vendorClass })">
+        Exportar Excel
+    </a>
+
+    <a class="btn btn-outline-danger"
+       href="@Url.Action("ExportByTypeClassVendorPdf", "Reports", new { type, vendorClass })">
+        Exportar PDF
+    </a>
+</div>
 <form asp-action="ByTypeClassVendor" method="post" class="row g-3 mb-4">
     <div class="col-auto">
         <select name="type" class="form-select">
-            <option disabled selected>Type</option>
+            <option value="" disabled selected>Tipo</option>
             @foreach (var t in types)
             {
                 <option value="@t">@t</option>
@@ -27,8 +42,8 @@
         </select>
     </div>
     <div class="col-auto">
-        <select name="class" class="form-select">
-            <option disabled selected>Class</option>
+        <select name="vendorClass" class="form-select">
+            <option value="" disabled selected>Clase</option>
             @foreach (var c in classes)
             {
                 <option value="@c">@c</option>
@@ -45,16 +60,16 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>Vendor</th>
-                <th>Delivered</th>
-                <th>Sold</th>
-                <th>Returned</th>
-                <th>Annulled</th>
-                <th>Gross</th>
-                <th>Commission</th>
-                <th>Net</th>
-                <th>State</th>
-                <th>Sale %</th>
+                <th>Vendedor</th>
+                <th>Entregados</th>
+                <th>Vendidos</th>
+                <th>Retornados</th>
+                <th>Anulados</th>
+                <th>Bruto</th>
+                <th>Comision</th>
+                <th>Neto</th>
+                <th>Estado</th>
+                <th>VentaPrct %</th>
             </tr>
         </thead>
         <tbody>
@@ -69,10 +84,30 @@
                     <td>@item.GrossAmount.ToString("C0")</td>
                     <td>@item.CommissionAmount.ToString("C0")</td>
                     <td>@item.NetAmount.ToString("C0")</td>
-                    <td>@(item.Closed ? "Closed" : "Open")</td>
+                    <td>@(item.Closed ? "Cerrado" : "Abierto")</td>
                     <td>@item.SalePercentage.ToString("F2") %</td>
                 </tr>
             }
+            @{
+                var totalDelivered = report.Sum(i => i.Delivered);
+                var totalSold = report.Sum(i => i.Sold);
+                var totalReturned = report.Sum(i => i.Returned);
+                var totalAnnulled = report.Sum(i => i.Annulled);
+                var totalGross = report.Sum(i => i.GrossAmount);
+                var totalCommission = report.Sum(i => i.CommissionAmount);
+                var totalNet = report.Sum(i => i.NetAmount);
+            }
+            <tr class="fw-bold table-secondary">
+                <td>Total</td>
+                <td>@totalDelivered</td>
+                <td>@totalSold</td>
+                <td>@totalReturned</td>
+                <td>@totalAnnulled</td>
+                <td>@totalGross.ToString("C0")</td>
+                <td>@totalCommission.ToString("C0")</td>
+                <td>@totalNet.ToString("C0")</td>
+                <td colspan="2"></td>
+            </tr>
         </tbody>
     </table>
 }

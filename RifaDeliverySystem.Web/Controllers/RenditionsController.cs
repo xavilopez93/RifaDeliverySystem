@@ -1,3 +1,5 @@
+using DocumentFormat.OpenXml.InkML;
+using iText.Kernel.Pdf.Action;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -69,9 +71,11 @@ namespace RifaDeliverySystem.Web.Controllers
             var model = new Rendition
             {
                 VendorId = vendorId,
-                Date = DateTime.UtcNow,
-                AvailableRanges = ranges,//new List<CouponRange> { new CouponRange()},
-                Payments = new List<Payment> { new Payment() } // arranca con 1 fila vac韆
+                // Inicializar la fecha con la hora local para permitir que el usuario la ajuste.
+                Date = DateTime.Now,
+                AvailableRanges = ranges,
+                // Se inicia con una fila de pago vac铆a.
+                Payments = new List<Payment>() // { new Payment() }
             };
 
             return View(model);
@@ -98,39 +102,70 @@ namespace RifaDeliverySystem.Web.Controllers
                 return View(model);
             }
 
-            // calculate commission
+            // c谩lculo de comisi贸n y saldo basado en cupones netos (vendidos - devueltos - extraviados - robados)
             var vendor = await _context.Vendors.FindAsync(model.VendorId);
-            var sold = model.CouponsSold;
+            var totalCoupons = model.CouponsSold;
+            var returned = model.CouponsReturned;
+            var extravio = model.Extravio;
+            var robo = model.Robo;
+            var netCoupons = totalCoupons - returned - extravio - robo;
+            if (netCoupons < 0) netCoupons = 0;
+
             var rule = await _context.CommissionRules
                 .Where(r =>
                     r.VendorType == vendor.Type &&
                     r.VendorClass == vendor.Class &&
-                    r.MinCoupons <= sold &&
-                   (r.MaxCoupons == null || r.MaxCoupons >= sold))
+                    r.MinCoupons <= totalCoupons &&
+                   (r.MaxCoupons == null || r.MaxCoupons >= totalCoupons))
                 .FirstOrDefaultAsync();
 
+            var revenue = netCoupons * 10000m;
             model.CommissionAmount = rule == null
                 ? 0m
-                : Math.Round(sold * 10000m * (rule.Percentage / 100m), 0);
+                : Math.Round(revenue * (rule.Percentage / 100m), 0);
             
-            model.Balance = sold * 10000m - model.CommissionAmount;
-            model.Date = DateTime.UtcNow;
-            var rendition = new Rendition();
-            rendition = model;    
-   
-            _context.Renditions.Add(rendition);
-        
-            var ranges = await _context.CouponRanges
-          .Where(r => model.RangeIds.Contains(r.Id) && r.RenditionId == null)
-          .ToListAsync();
-            ranges.ForEach(r => r.Rendition = rendition);
-
-            var paymentsCopy = model.Payments.ToList();
-            foreach (var p in paymentsCopy)
+            model.Balance = revenue - model.CommissionAmount;
+            // Construir una nueva instancia de Rendition para evitar adjuntar propiedades no deseadas (como AvailableRanges).
+            var rendition = new Rendition
             {
-                p.Rendition = model;
-                // si necesitas, tambi閚 puedes hacer: model.Payments.Add(p);
+                VendorId = model.VendorId,
+                Date = model.Date,
+                CouponsSold = model.CouponsSold,
+                CouponsReturned = model.CouponsReturned,
+                Extravio = model.Extravio,
+                Robo = model.Robo,
+                CommissionAmount = model.CommissionAmount,
+                Balance = model.Balance,
+                Payments = new List<Payment>(),
+            };
+
+            _context.Renditions.Add(rendition);
+
+            // Asignar rangos seleccionados a la nueva rendici贸n
+            var ranges = await _context.CouponRanges
+                .Where(r => model.RangeIds.Contains(r.Id) && r.RenditionId == null)
+                .ToListAsync();
+            foreach (var r in ranges)
+            {
+                r.Rendition = rendition;
             }
+
+            if (model.Payments != null)
+            {
+                foreach (var p in model.Payments)
+                {
+                    if (p != null && p.Amount > 0)
+                    {
+                        rendition.Payments.Add(new Payment
+                        {
+                            Type = p.Type,
+                            Amount = p.Amount,
+                            ReceiptNumber = p.ReceiptNumber
+                        });
+                    }
+                }
+            }
+
             await _context.SaveChangesAsync();
 
             return RedirectToAction(nameof(Index));
@@ -145,19 +180,19 @@ namespace RifaDeliverySystem.Web.Controllers
             var rendition = await _context.Renditions
                 .Include(r => r.CouponRanges)
                 .Include(r => r.Vendor)
-                
-        .Include(r => r.Payments)   
+                .Include(r => r.Payments)   
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (rendition == null)
                 return NotFound();
 
-           ViewData["CouponRanges"] = rendition.CouponRanges.Select(r => new SelectListItem
-           {
-               Value = r.Id.ToString(),
-               Text = $"{r.StartNumber} - {r.EndNumber}",
-               Selected = r.Id == rendition.CouponRanges.FirstOrDefault()?.Id // marca el primero como seleccionado 
-           }).ToList();
+            // Marcar todos los rangos asignados como seleccionados para que se muestren correctamente en la vista.
+            ViewData["CouponRanges"] = rendition.CouponRanges.Select(r => new SelectListItem
+            {
+                Value = r.Id.ToString(),
+                Text = $"{r.StartNumber} - {r.EndNumber}",
+                Selected = true
+            }).ToList();
 
             return View(rendition);
         }
@@ -183,36 +218,84 @@ namespace RifaDeliverySystem.Web.Controllers
                 return View(model);
             }
 
-            // calculate commission
+            // Cargamos la rendici贸n existente con sus rangos y pagos para actualizarla correctamente
+            var dbRendition = await _context.Renditions
+                .Include(r => r.CouponRanges)
+                .Include(r => r.Payments)
+                .FirstOrDefaultAsync(r => r.Id == model.Id);
+            if (dbRendition == null)
+                return NotFound();
+
+            // Calcular comisi贸n y saldo basado en cupones netos (vendidos - devueltos - extraviados - robados)
             var vendor = await _context.Vendors.FindAsync(model.VendorId);
-            var sold = model.CouponsSold;
+            var totalCoupons = model.CouponsSold;
+            var returned = model.CouponsReturned;
+            var extravio = model.Extravio;
+            var robo = model.Robo;
+            var netCoupons = totalCoupons - returned - extravio - robo;
+            if (netCoupons < 0) netCoupons = 0;
+
             var rule = await _context.CommissionRules
                 .Where(r =>
                     r.VendorType == vendor.Type &&
                     r.VendorClass == vendor.Class &&
-                    r.MinCoupons <= sold &&
-                   (r.MaxCoupons == null || r.MaxCoupons >= sold))
+                    r.MinCoupons <= totalCoupons &&
+                   (r.MaxCoupons == null || r.MaxCoupons >= totalCoupons))
                 .FirstOrDefaultAsync();
 
-            model.CommissionAmount = rule == null
+            var revenue = netCoupons * 10000m;
+            var commission = rule == null
                 ? 0m
-                : Math.Round(sold * 10000m * (rule.Percentage / 100m), 0);
+                : Math.Round(revenue * (rule.Percentage / 100m), 0);
 
-            model.Balance = sold * 10000m - model.CommissionAmount;
-            model.Date = DateTime.UtcNow;
-           var rendition = model;
-            _context.Renditions.Update(rendition);
+            // Actualizar campos simples de la rendici贸n existente
+            dbRendition.CouponsSold = model.CouponsSold;
+            dbRendition.CouponsReturned = model.CouponsReturned;
+            dbRendition.Extravio = model.Extravio;
+            dbRendition.Robo = model.Robo;
+            dbRendition.Date = model.Date.ToUniversalTime();
+            dbRendition.CommissionAmount = commission;
+            dbRendition.Balance = revenue - commission;
 
-            var oldPayments = _context.Payments.Where(p => p.RenditionId == model.Id);
-            _context.Payments.RemoveRange(oldPayments);
-
-            var paymentsCopy = model.Payments.ToList();
-            foreach (var p in paymentsCopy)
+            // Actualizar los rangos: eliminar los que ya no est谩n seleccionados
+            foreach (var range in dbRendition.CouponRanges.ToList())
             {
-                p.Rendition = model;
+                if (!model.RangeIds.Contains(range.Id))
+                {
+                    range.RenditionId = null;
+                    dbRendition.CouponRanges.Remove(range);
+                }
             }
-            await _context.SaveChangesAsync();
+            // Asignar los rangos que se seleccionaron y a煤n no estaban asignados
+            var rangesToAdd = await _context.CouponRanges
+                .Where(r => model.RangeIds.Contains(r.Id) && r.RenditionId == null)
+                .ToListAsync();
+            foreach (var r in rangesToAdd)
+            {
+                r.Rendition = dbRendition;
+            }
 
+            // Actualizar los pagos: eliminar los pagos antiguos y a帽adir los nuevos
+            _context.Payments.RemoveRange(dbRendition.Payments);
+            //dbRendition.Payments.Clear();
+
+            if (model.Payments != null)
+            {
+                foreach (var p in model.Payments)
+                {
+                    if (p != null && p.Amount > 0)
+                    {
+                        dbRendition.Payments.Add(new Payment
+                        {
+                            Type = p.Type,
+                            Amount = p.Amount,
+                            ReceiptNumber = p.ReceiptNumber
+                        });
+                    }
+                }
+            }
+
+            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
@@ -262,7 +345,7 @@ namespace RifaDeliverySystem.Web.Controllers
             var rendition = await _context.Renditions
                 .Include(r => r.Vendor)
                 .Include(r => r.AvailableRanges)
-                
+                .Include(r => r.Payments)
                 .FirstOrDefaultAsync(r => r.Id == id);
 
             if (rendition == null) return NotFound();

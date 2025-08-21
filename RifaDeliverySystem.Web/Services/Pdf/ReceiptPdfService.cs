@@ -142,9 +142,12 @@ namespace RifaDeliverySystem.Web.Services.Pdf
                 payTable.AddCell(p.ReceiptNumber ?? "-").SetFont(bold);
             }
             doc.Add(payTable);
-            netGs = payments.Sum(p => p.Amount);
+            // Calcular el total de pagos realizados. Si existen pagos registrados, el monto total en letras
+            // corresponde a la suma de esos pagos; de lo contrario, usar el neto calculado previamente (ventas - comisión).
+            var totalPayments = payments.Sum(p => p.Amount);
+            var netInGs = totalPayments != 0m ? totalPayments : netGs;
 
-            doc.Add(new Paragraph($"Monto total en letras: {NumeroALetras((long)netGs)}").SetFontSize(9));
+            doc.Add(new Paragraph($"Monto total en letras: {NumeroALetras((long)netInGs)}").SetFontSize(9));
 
             // --- Firmas ---
             var firmas = new Table(UnitValue.CreatePercentArray(new[] { 50f, 50f }))

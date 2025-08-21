@@ -10,6 +10,24 @@
 }
 
 <h1>Rangos de Cupones</h1>
+@{
+    var vendorId = Context.Request.Query["vendorId"].ToString();
+    var onlyAvailable = Context.Request.Query["onlyAvailable"].ToString();
+    var search = Context.Request.Query["search"].ToString();
+}
+
+<div class="mb-3 d-flex gap-2">
+    <a class="btn btn-outline-success"
+       href="@Url.Action("ExportIndexExcel", "CouponRanges", new { vendorId, onlyAvailable, search })">
+        Exportar Excel
+    </a>
+
+    <a class="btn btn-outline-danger"
+       href="@Url.Action("ExportIndexPdf", "CouponRanges", new { vendorId, onlyAvailable, search })">
+        Exportar PDF
+    </a>
+</div>
+
 <p><a asp-action="Create" class="btn btn-primary">Nuevo Rango</a></p>
 <table class="table">
   <thead><tr><th>Vendedor</th><th>Inicio</th><th>Fin</th><th></th></tr></thead>

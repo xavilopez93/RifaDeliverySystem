@@ -77,11 +77,14 @@
             <tbody id="paymentContainer">
                 @for (int i = 0; i < Model.Payments.Count; i++)
                 {
+                    // To allow proper binding of collection items in ASP.NET Core you must include a
+                    // hidden `Payments.Index` field for each element. Otherwise the model binder
+                    // discards the values for the collection.
                     var paymentViewData = new ViewDataDictionary(ViewData)
-                                {
-                                { "HtmlFieldPrefix", $"Payments[{i}]" }
-                                };
-
+                    {
+                        { "HtmlFieldPrefix", $"Payments[{i}]" }
+                    };
+                    <input type="hidden" name="Payments.Index" value="@i" />
                     <partial name="_PaymentRow" model="Model.Payments[i]" view-data="paymentViewData" />
                 }
             </tbody>
@@ -111,20 +114,21 @@
     <partial name="_ValidationScriptsPartial" />
     <script>
         document.getElementById('addRow').addEventListener('click', () => {
-                  let currentIndex = document.querySelectorAll('.payment-row').length;
-
-        fetch('/Renditions/EmptyPaymentRow')
-            .then(res => res.text())
-            .then(html => {
-                const prefixed = html.replaceAll('name="Amount"', `name="Payments[${currentIndex}].Amount"`)
-                                     .replaceAll('name="Type"', `name="Payments[${currentIndex}].Type"`)
-                                     .replaceAll('name="ReceiptNumber"', `name="Payments[${currentIndex}].ReceiptNumber"`)
-                                     .replaceAll('id="Amount"', `id="Payments_${currentIndex}__Amount"`); // para evitar duplicados
-
-                document.getElementById('paymentContainer').insertAdjacentHTML('beforeend', prefixed);
-                afterNewPaymentRowAdded(); // reaplica eventos y validación
-            });
-
+            // determine the next index based on the number of existing payment rows
+            let currentIndex = document.querySelectorAll('.payment-row').length;
+            fetch('/Renditions/EmptyPaymentRow')
+                .then(res => res.text())
+                .then(html => {
+                    // adjust the name and id attributes for the new row to match the collection index
+                    const prefixed = html.replaceAll('name="Amount"', `name="Payments[${currentIndex}].Amount"`)
+                                         .replaceAll('name="Type"', `name="Payments[${currentIndex}].Type"`)
+                                         .replaceAll('name="ReceiptNumber"', `name="Payments[${currentIndex}].ReceiptNumber"`)
+                                         .replaceAll('id="Amount"', `id="Payments_${currentIndex}__Amount"`);
+                    // also insert a hidden Payments.Index field so the model binder will bind this new row
+                    const hiddenIndex = `<input type="hidden" name="Payments.Index" value="${currentIndex}" />`;
+                    document.getElementById('paymentContainer').insertAdjacentHTML('beforeend', hiddenIndex + prefixed);
+                    afterNewPaymentRowAdded();
+                });
         });
 
         document.addEventListener('click', e => {
@@ -136,6 +140,11 @@
 
         function renumerateIndexes() {
             document.querySelectorAll('.payment-row').forEach((row, idx) => {
+                // update the hidden index that precedes each payment row
+                const hidden = row.previousElementSibling;
+                if (hidden && hidden.name === 'Payments.Index') {
+                    hidden.value = idx;
+                }
                 row.querySelectorAll('input, select').forEach(el => {
                     const nameAttr = el.name;
                     if (nameAttr) {
@@ -211,6 +220,18 @@
             });
 
             updateTotalAmount();
+        });
+
+              function normalizeToDecimalForPost(v) {
+          if (!v) return "";
+          // Quita separadores de miles y cambia coma por punto
+          return v.replace(/\./g, '').replace(',', '.');
+        }
+
+        document.querySelector('form').addEventListener('submit', function () {
+          document.querySelectorAll('.payment-amount').forEach(function (inp) {
+            inp.value = normalizeToDecimalForPost(inp.value);
+          });
         });
     </script>
 }

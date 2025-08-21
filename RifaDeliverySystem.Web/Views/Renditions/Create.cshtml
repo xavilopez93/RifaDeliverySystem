@@ -1,9 +1,9 @@
-﻿@model RifaDeliverySystem.Web.Models.Rendition
+@model RifaDeliverySystem.Web.Models.Rendition
 @using Microsoft.AspNetCore.Mvc.Rendering
 @using RifaDeliverySystem.Web.Extensions;
 
 @{
-    ViewData["Title"] = "Crear Rendición";
+    ViewData["Title"] = "Crear RendiciÃ³n";
     // ViewBag.Vendors  = SelectList of vendor.Id / vendor.Name
     // ViewBag.Ranges   = SelectList of range.Id / $"{range.Vendor.Name}: {range.StartNumber}-{range.EndNumber}"
 }
@@ -27,7 +27,7 @@
         <span asp-validation-for="VendorId" class="text-danger"></span>
     </div>
 
-    <!-- ▼ Rangos disponibles (multi-select) -->
+    <!-- â¼ Rangos disponibles (multi-select) -->
     <div class="mb-3">
       <select asp-for="RangeIds"
         asp-items="Model.AvailableRanges" id="RangeIds"
@@ -67,15 +67,9 @@
             <tr><th>Forma</th><th>Monto</th><th>Referencia</th><th></th></tr>
         </thead>
         <tbody id="paymentContainer">
-    @for (int i = 0; i < Model.Payments.Count; i++)
-    {
-        var paymentViewData = new ViewDataDictionary(ViewData)
-        {
-            { "HtmlFieldPrefix", $"Payments[{i}]" }
-        };
-
-        <partial name="_PaymentRow" model="Model.Payments[i]" view-data="paymentViewData" />
-    }
+    @* Enumerate through existing payments and include a hidden index for each one. Without this
+       `Payments.Index` field ASP.NET Core's model binder will not bind collection items properly. *@
+   
 </tbody>
 
     </table>
@@ -109,9 +103,10 @@ fetch(window.location.origin + '/Renditions/EmptyPaymentRow')
                              .replaceAll('name="Type"', `name="Payments[${currentIndex}].Type"`)
                              .replaceAll('name="ReceiptNumber"', `name="Payments[${currentIndex}].ReceiptNumber"`)
                              .replaceAll('id="Amount"', `id="Payments_${currentIndex}__Amount"`); // para evitar duplicados
-
-        document.getElementById('paymentContainer').insertAdjacentHTML('beforeend', prefixed);
-        afterNewPaymentRowAdded(); // reaplica eventos y validación
+        // Insert a hidden index before the row so the model binder can reconstruct the collection
+        const hiddenIndex = `<input type="hidden" name="Payments.Index" value="${currentIndex}" />`;
+        document.getElementById('paymentContainer').insertAdjacentHTML('beforeend', hiddenIndex + prefixed);
+        afterNewPaymentRowAdded(); // reaplica eventos y validaciÃ³n
     });
 
         });
@@ -122,7 +117,12 @@ fetch(window.location.origin + '/Renditions/EmptyPaymentRow')
             }
         });
         function renumerateIndexes() {
-            document.querySelectorAll('.payment-row').forEach((row, idx) => {
+                document.querySelectorAll('.payment-row').forEach((row, idx) => {
+                // Also update the hidden Payments.Index field preceding each row
+                const hidden = row.previousElementSibling;
+                if (hidden && hidden.name === 'Payments.Index') {
+                    hidden.value = idx;
+                }
                 row.querySelectorAll('input,select').forEach(el => {
                     el.name = el.name.replace(/Payments\[\d+\]/, `Payments[${idx}]`);
                     el.id   = el.id.replace(/_Payments_\d+__/, `_Payments_${idx}__`);
@@ -131,12 +131,12 @@ fetch(window.location.origin + '/Renditions/EmptyPaymentRow')
         }
         // ===== Select2 =====
         $('.select2').select2({
-            placeholder: 'Seleccione uno o varios rangos…',
+            placeholder: 'Seleccione uno o varios rangos',
             width: '100%',
             dropdownParent: $('form')
         });
 
-        // ===== Conteo dinámico =====
+        // ===== Conteo dinÃ¡mico =====
      const rangeMap = @Html.Raw(
             System.Text.Json.JsonSerializer.Serialize(
                 Model.AvailableRanges.ToDictionary(
@@ -149,7 +149,7 @@ fetch(window.location.origin + '/Renditions/EmptyPaymentRow')
         int result = 0;
         if (match.Success)
         {
-            // Grupo 1 = primer número, Grupo 2 = segundo número
+            // Grupo 1 = primer nÃºmero, Grupo 2 = segundo nÃºmero
             int a = int.Parse(match.Groups[1].Value);
             int b = int.Parse(match.Groups[2].Value);
              result = b - a + 1;
@@ -266,5 +266,17 @@ fetch(window.location.origin + '/Renditions/EmptyPaymentRow')
         rebindMoneyInputs();
         updateTotalAmount();
     }
+
+    function normalizeToDecimalForPost(v) {
+    if (!v) return "";
+    // Quita separadores de miles y cambia coma por punto
+    return v.replace(/\./g, '').replace(',', '.');
+  }
+
+  document.querySelector('form').addEventListener('submit', function () {
+    document.querySelectorAll('.payment-amount').forEach(function (inp) {
+      inp.value = normalizeToDecimalForPost(inp.value);
+    });
+  });
     </script>
 }

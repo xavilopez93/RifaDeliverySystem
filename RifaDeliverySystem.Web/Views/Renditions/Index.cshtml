@@ -19,7 +19,7 @@
             <th>Retornado</th>
             <th>Extraviado</th>
             <th>Robado</th>
-            <th>% Comm</th>
+            <th>Comisión (Gs)</th>
             <th>Balance</th>
             <th></th>
     </tr>
@@ -34,7 +34,7 @@
           <td>@r.CouponsReturned</td>
                 <td>@r.Extravio</td>
                 <td>@r.Robo</td>
-          <td>@r.CommissionAmount.ToString("%")</td>
+          <td>@r.CommissionAmount.ToString("N0")</td>
           <td>@r.Balance.ToString("C0")</td>
           <td>
             <a asp-action="Edit" asp-route-id="@r.Id">Editar</a>

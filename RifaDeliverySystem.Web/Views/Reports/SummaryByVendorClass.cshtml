@@ -1,4 +1,4 @@
-﻿@model List<RifaDeliverySystem.Web.ViewModels.Reports.VendorByClassGroupViewModel>
+@model List<RifaDeliverySystem.Web.ViewModels.Reports.VendorByClassGroupViewModel>
 
 @{
     ViewData["Title"] = "Resumen por Clase";
@@ -48,3 +48,30 @@
         </tbody>
     </table>
 }
+
+@* Grand total across all classes *@
+@{
+    var grandTotalSold = Model.Sum(g => g.TotalSold);
+    var grandTotalReturned = Model.Sum(g => g.TotalReturned);
+    var grandTotalExtravio = Model.Sum(g => g.TotalExtravio);
+    var grandTotalRobo = Model.Sum(g => g.TotalRobo);
+}
+<h3>Totales Generales</h3>
+<table class="table table-bordered table-sm">
+    <thead>
+        <tr>
+            <th class="text-start">Total Vendidos</th>
+            <th>Total Retornados</th>
+            <th>Total Extravio</th>
+            <th>Total Robo</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr class="fw-bold text-end table-secondary">
+            <td class="text-start">@grandTotalSold</td>
+            <td>@grandTotalReturned</td>
+            <td>@grandTotalExtravio</td>
+            <td>@grandTotalRobo</td>
+        </tr>
+    </tbody>
+</table>

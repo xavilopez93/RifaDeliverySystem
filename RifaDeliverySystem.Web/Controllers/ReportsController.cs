@@ -17,6 +17,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
+
 namespace RifaDeliverySystem.Web.Controllers
 {
     public class ReportsController : Controller
@@ -56,10 +57,60 @@ namespace RifaDeliverySystem.Web.Controllers
                 query = query.Where(r => r.Vendor.Class == vendorClass);
 
             var data = await query
+    .GroupBy(r => new { r.Vendor.Id, r.Vendor.Name })
+    .Select(g => new
+    {
+        VendorName = g.Key.Name,
+        Delivered = g.Sum(r => r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1)),
+        Sold = g.Sum(r => r.CouponsSold),
+        Returned = g.Sum(r => r.CouponsReturned),
+        Annulled = g.Sum(r => r.Extravio + r.Robo),
+        GrossAmount = g.Sum(r => r.CouponsSold * 10000m),
+        CommissionAmount = g.Sum(r => r.CommissionAmount),
+        NetAmount = g.Sum(r => r.Balance),
+        Closed = g.All(r =>
+            r.CouponsSold + r.CouponsReturned + r.Extravio + r.Robo
+            >= r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1))
+    })
+    .Select(x => new TypeClassVendorReportItem
+    {
+        VendorName = x.VendorName,
+        Delivered = x.Delivered,
+        Sold = x.Sold,
+        Returned = x.Returned,
+        Annulled = x.Annulled,
+        GrossAmount = x.GrossAmount,
+        CommissionAmount = x.CommissionAmount,
+        NetAmount = x.NetAmount,
+        Closed = x.Closed,
+        // evita 22012 div by zero
+        SalePercentage = x.Delivered == 0 ? 0m : (x.Sold * 100m) / x.Delivered
+    })
+    .ToListAsync();
+
+            return View(data);
+        }
+        private async Task<List<TypeClassVendorReportItem>> GetByTypeClassVendorAsync(string type, string vendorClass)
+        {
+            var query = _context.Renditions
+                .Include(r => r.Vendor)
+                .Include(r => r.CouponRanges)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(type))
+                query = query.Where(r => r.Vendor.Type == type);
+
+            if (!string.IsNullOrWhiteSpace(vendorClass))
+                query = query.Where(r => r.Vendor.Class == vendorClass);
+
+            var data = await query
                 .GroupBy(r => new { r.Vendor.Id, r.Vendor.Name })
-                .Select(g => new TypeClassVendorReportItem
+                .Select(g => new
                 {
                     VendorName = g.Key.Name,
+                    Delivered = g.Sum(r => r.CouponRanges
+                        .Where(cr => cr.EndNumber >= cr.StartNumber)
+                        .Sum(cr => cr.EndNumber - cr.StartNumber + 1)),
                     Sold = g.Sum(r => r.CouponsSold),
                     Returned = g.Sum(r => r.CouponsReturned),
                     Annulled = g.Sum(r => r.Extravio + r.Robo),
@@ -68,15 +119,156 @@ namespace RifaDeliverySystem.Web.Controllers
                     NetAmount = g.Sum(r => r.Balance),
                     Closed = g.All(r =>
                         r.CouponsSold + r.CouponsReturned + r.Extravio + r.Robo
-                        >= (r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1))),
-                    SalePercentage = g.Sum(r => r.CouponsSold) * 100m
-                                      / g.Sum(r => r.CouponRanges.Sum(cr => cr.EndNumber - cr.StartNumber + 1)) // Corrected denominator
+                        >= r.CouponRanges
+                            .Where(cr => cr.EndNumber >= cr.StartNumber)
+                            .Sum(cr => cr.EndNumber - cr.StartNumber + 1))
                 })
+                .Select(x => new TypeClassVendorReportItem
+                {
+                    VendorName = x.VendorName,
+                    Delivered = x.Delivered,
+                    Sold = x.Sold,
+                    Returned = x.Returned,
+                    Annulled = x.Annulled,
+                    GrossAmount = x.GrossAmount,
+                    CommissionAmount = x.CommissionAmount,
+                    NetAmount = x.NetAmount,
+                    Closed = x.Closed,
+                    SalePercentage = x.Delivered == 0 ? 0m : (x.Sold * 100m) / x.Delivered
+                })
+                .OrderBy(x => x.VendorName)
                 .ToListAsync();
 
-            return View(data);
+            return data;
         }
 
+        // 3.3) Exportar a Excel
+        [HttpGet]
+        public async Task<IActionResult> ExportByTypeClassVendorExcel(string type, string vendorClass)
+        {
+            var data = await GetByTypeClassVendorAsync(type, vendorClass);
+
+            using var wb = new XLWorkbook();
+            var ws = wb.AddWorksheet("Resumen");
+
+            int row = 1, col = 1;
+            // Encabezados
+            ws.Cell(row, col++).Value = "Vendedor";
+            ws.Cell(row, col++).Value = "Entregado";
+            ws.Cell(row, col++).Value = "Vendido";
+            ws.Cell(row, col++).Value = "Devuelto";
+            ws.Cell(row, col++).Value = "Anulado";
+            ws.Cell(row, col++).Value = "% Venta";
+            ws.Cell(row, col++).Value = "Monto Bruto";
+            ws.Cell(row, col++).Value = "Comisi√≥n";
+            ws.Cell(row, col++).Value = "Neto";
+            ws.Cell(row, col++).Value = "Cerrado";
+            ws.Range(1, 1, 1, 10).Style.Font.Bold = true;
+
+            // Filas
+            foreach (var i in data)
+            {
+                row++; col = 1;
+                ws.Cell(row, col++).Value = i.VendorName;
+                ws.Cell(row, col++).Value = i.Delivered;
+                ws.Cell(row, col++).Value = i.Sold;
+                ws.Cell(row, col++).Value = i.Returned;
+                ws.Cell(row, col++).Value = i.Annulled;
+                ws.Cell(row, col++).Value = (double)i.SalePercentage / 100.0; // formato porcentaje
+                ws.Cell(row, col++).Value = (double)i.GrossAmount;
+                ws.Cell(row, col++).Value = (double)i.CommissionAmount;
+                ws.Cell(row, col++).Value = (double)i.NetAmount;
+                ws.Cell(row, col++).Value = i.Closed ? "S√≠" : "No";
+            }
+
+            // Totales
+            row++;
+            ws.Cell(row, 1).Value = "Totales:";
+            ws.Cell(row, 1).Style.Font.Bold = true;
+            ws.Cell(row, 2).FormulaA1 = $"SUM(B2:B{row - 1})";
+            ws.Cell(row, 3).FormulaA1 = $"SUM(C2:C{row - 1})";
+            ws.Cell(row, 4).FormulaA1 = $"SUM(D2:D{row - 1})";
+            ws.Cell(row, 5).FormulaA1 = $"SUM(E2:E{row - 1})";
+            ws.Cell(row, 7).FormulaA1 = $"SUM(G2:G{row - 1})";
+            ws.Cell(row, 8).FormulaA1 = $"SUM(H2:H{row - 1})";
+            ws.Cell(row, 9).FormulaA1 = $"SUM(I2:I{row - 1})";
+            ws.Range(row, 1, row, 9).Style.Font.Bold = true;
+
+            // Formatos
+            ws.Column(6).Style.NumberFormat.Format = "0.00%";
+            ws.Column(7).Style.NumberFormat.Format = "#,##0";
+            ws.Column(8).Style.NumberFormat.Format = "#,##0";
+            ws.Column(9).Style.NumberFormat.Format = "#,##0";
+            ws.Columns().AdjustToContents();
+
+            using var stream = new MemoryStream();
+            wb.SaveAs(stream);
+            var fileName = $"ByTypeClassVendor_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
+            return File(stream.ToArray(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                fileName);
+        }
+
+        // Fix for CS1929: 'Document' does not contain a definition for 'Create'
+        // The issue occurs because the `Document` class from iText does not have a `Create` method.
+        // The fix involves replacing the incorrect usage of `Document.Create` with the correct instantiation of the `Document` class.
+
+        [HttpGet]
+        public async Task<IActionResult> ExportByTypeClassVendorPdf(string type, string vendorClass)
+        {
+            var data = await GetByTypeClassVendorAsync(type, vendorClass);
+
+            // Configuraci√≥n cultural simple para formatos
+            var culture = new System.Globalization.CultureInfo("es-PY");
+
+            using var stream = new MemoryStream();
+            var writer = new PdfWriter(stream);
+            var pdf = new PdfDocument(writer);
+            var document = new Document(pdf, iText.Kernel.Geom.PageSize.A4);
+            document.SetMargins(30, 30, 30, 30);
+
+            document.Add(new Paragraph("Resumen por Tipo/Clase/Vendedor")
+                .SetBold().SetFontSize(16).SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER));
+
+            var table = new Table(new float[] { 3, 1, 1, 1, 1, 1, 2, 2, 2, 1 }).UseAllAvailableWidth();
+
+            // Header
+            table.AddHeaderCell("Vendedor");
+            table.AddHeaderCell("Entregado");
+            table.AddHeaderCell("Vendido");
+            table.AddHeaderCell("Devuelto");
+            table.AddHeaderCell("Anulado");
+            table.AddHeaderCell("% Venta");
+            table.AddHeaderCell("Monto Bruto");
+            table.AddHeaderCell("Comisi√≥n");
+            table.AddHeaderCell("Neto");
+            table.AddHeaderCell("Cerrado");
+
+            // Body
+            foreach (var i in data)
+            {
+                table.AddCell(i.VendorName);
+                table.AddCell(i.Delivered.ToString("N0", culture));
+                table.AddCell(i.Sold.ToString("N0", culture));
+                table.AddCell(i.Returned.ToString("N0", culture));
+                table.AddCell(i.Annulled.ToString("N0", culture));
+                table.AddCell((i.SalePercentage / 100m).ToString("P2", culture));
+                table.AddCell(i.GrossAmount.ToString("#,##0", culture));
+                table.AddCell(i.CommissionAmount.ToString("#,##0", culture));
+                table.AddCell(i.NetAmount.ToString("#,##0", culture));
+                table.AddCell(i.Closed ? "S√≠" : "No");
+            }
+
+            document.Add(table);
+
+            document.Add(new Paragraph($"Generado: {DateTime.Now:dd/MM/yyyy HH:mm}")
+                .SetFontSize(9).SetTextAlignment(iText.Layout.Properties.TextAlignment.RIGHT));
+
+            document.Close();
+
+            var fileName = $"ByTypeClassVendor_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
+            return File(stream.ToArray(), "application/pdf", fileName);
+        }
         // --- By City/Department ---
         [HttpGet]
         public async Task<IActionResult> ByCityDept()
@@ -153,7 +345,10 @@ namespace RifaDeliverySystem.Web.Controllers
                         "CouponRanges.xlsx");
         }
 
-        // --- Download Coupon Ranges (PDF) ---
+        // Fix for CS1729: 'Document' does not contain a constructor that takes 1 arguments
+        // The issue occurs because the `Document` class from QuestPDF does not have a constructor that accepts a `PdfDocument` object.
+        // The fix involves replacing the incorrect instantiation with the appropriate `Document.Create` method.
+
         [HttpGet]
         public async Task<IActionResult> ExportRangesPdf()
         {
@@ -166,7 +361,9 @@ namespace RifaDeliverySystem.Web.Controllers
             var writer = new PdfWriter(ms);
             writer.SetCloseStream(false);
             var pdf = new PdfDocument(writer);
-            var doc = new Document(pdf, iText.Kernel.Geom.PageSize.A4.Rotate());
+
+            // Corrected instantiation of Document
+            var doc = new iText.Layout.Document(pdf, iText.Kernel.Geom.PageSize.A4.Rotate());
             doc.SetMargins(20, 20, 20, 20);
 
             doc.Add(new Paragraph("Informe de Rangos de Cupones")
@@ -360,7 +557,7 @@ namespace RifaDeliverySystem.Web.Controllers
                 .SetFontSize(14).SetBold().SetTextAlignment(iText.Layout.Properties.TextAlignment.CENTER));
             doc.Add(new Paragraph($"Fecha: {DateTime.Now:dd/MM/yyyy}\n\n"));
 
-            // tabla de 3 columnas
+            // tabla de 3 columnas  
             var table = new Table(3).UseAllAvailableWidth();
             table.AddHeaderCell("Vendedor");
             table.AddHeaderCell("Desde");
@@ -469,7 +666,7 @@ namespace RifaDeliverySystem.Web.Controllers
             worksheet.Cell(1, 4).Value = "Retornados";
             worksheet.Cell(1, 5).Value = "Vendidos";
             worksheet.Cell(1, 6).Value = "Monto Bruto";
-            worksheet.Cell(1, 7).Value = "ComisiÛn";
+            worksheet.Cell(1, 7).Value = "Comisi√≥n";
             worksheet.Cell(1, 8).Value = "Monto Neto";
 
             int row = 2;
@@ -543,7 +740,7 @@ namespace RifaDeliverySystem.Web.Controllers
 
         //    //var filter = new VendorSummaryFilter
         //    //{
-        //    //    // Establece fechas por defecto como UTC si se desea un rango predeterminado (˙ltimos 30 dÌas por ejemplo)
+        //    //    // Establece fechas por defecto como UTC si se desea un rango predeterminado (√∫ltimos 30 d√≠as por ejemplo)
         //    //    StartDate = DateTime.SpecifyKind(DateTime.UtcNow.AddDays(-30), DateTimeKind.Utc),
         //    //    EndDate = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc)
         //    //};
@@ -782,7 +979,7 @@ namespace RifaDeliverySystem.Web.Controllers
             table.AddHeaderCell("Entregados");
             table.AddHeaderCell("Vendidos");
             table.AddHeaderCell("Bruto");
-            table.AddHeaderCell("ComisiÛn");
+            table.AddHeaderCell("Comisi√≥n");
             table.AddHeaderCell("Neto");
 
             foreach (var item in data)
@@ -830,7 +1027,7 @@ namespace RifaDeliverySystem.Web.Controllers
             }
 
             var summary = await query
-                .GroupBy(r => r.Vendor.Type + " ñ " + r.Vendor.Class)
+                .GroupBy(r => r.Vendor.Type + " ¬ñ " + r.Vendor.Class)
                 .Select(g => new
                 {
                     GroupName = g.Key,
@@ -847,7 +1044,7 @@ namespace RifaDeliverySystem.Web.Controllers
 
             ws.Cell(1, 1).Value = "Grupo";
             ws.Cell(1, 2).Value = "Total Cupones";
-            ws.Cell(1, 3).Value = "ComisiÛn";
+            ws.Cell(1, 3).Value = "Comisi√≥n";
             ws.Cell(1, 4).Value = "Bruto";
             ws.Cell(1, 5).Value = "Neto";
 
@@ -874,7 +1071,7 @@ namespace RifaDeliverySystem.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> ExportSummaryByVendorClassPdf()
         {
-            var data = await GetSummaryByClassData(); // mÈtodo com˙n abajo
+            var data = await GetSummaryByClassData(); // m√©todo com√∫n abajo
 
             using var stream = new MemoryStream();
             using var writer = new StreamWriter(stream);
